@@ -1,0 +1,70 @@
+name: Release
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. 0.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+      - name: Resolve version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Invalid version: $VERSION"; exit 1
+          fi
+          echo "$VERSION" > VERSION
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Build & test
+        run: swift build && swift test
+
+      - name: Package DMG + ZIP
+        env:
+          APP_VERSION: ${{ steps.version.outputs.version }}
+        run: ./scripts/package_dmg.sh
+
+      - name: Generate latest.json
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          OWNER_REPO: ${{ github.repository }}
+        run: python3 scripts/make_latest_json.py
+
+      - name: Validate latest.json
+        run: python3 scripts/validate_latest_json.py dist/latest.json "${{ steps.version.outputs.version }}"
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ steps.version.outputs.version }}" \
+            dist/StatsUsage.dmg dist/StatsUsage-macOS.zip dist/latest.json \
+            --title "v${{ steps.version.outputs.version }}" \
+            --generate-notes || \
+          gh release upload "v${{ steps.version.outputs.version }}" \
+            dist/StatsUsage.dmg dist/StatsUsage-macOS.zip dist/latest.json --clobber
+
+      - name: Post-publish check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER_REPO: ${{ github.repository }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: python3 scripts/check_published_latest.py

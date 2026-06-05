@@ -1,0 +1,33 @@
+{
+  "id": "generic-newapi",
+  "displayName": "Generic New API",
+  "match": { "hostPatterns": ["*"], "defaultBalanceChannelEnabled": true },
+  "setup": { "requiredInputs": ["displayName", "baseURL", "balanceAuth", "userID"] },
+  "authStrategies": [
+    { "kind": "savedBearer" },
+    { "kind": "browserBearer" },
+    { "kind": "savedCookieHeader" },
+    { "kind": "browserCookieHeader" }
+  ],
+  "balanceRequest": {
+    "method": "GET",
+    "path": "/api/user/self",
+    "authHeader": "Authorization",
+    "authScheme": "Bearer",
+    "userIDHeader": "New-Api-User"
+  },
+  "tokenRequest": {
+    "usagePath": "/api/usage/token/",
+    "subscriptionPath": "/v1/dashboard/billing/subscription",
+    "billingUsagePath": "/v1/dashboard/billing/usage"
+  },
+  "extract": {
+    "success": "success",
+    "remaining": "data.quota",
+    "used": "data.used_quota",
+    "limit": "add(data.quota,data.used_quota)",
+    "unit": "quota",
+    "accountLabel": "coalesce(data.group,\"Default Plan\")"
+  },
+  "postprocessID": "quotaDisplayStatus"
+}

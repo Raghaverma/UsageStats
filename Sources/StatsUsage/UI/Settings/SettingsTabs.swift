@@ -123,6 +123,7 @@ struct NotchSettingsView: View {
 /// Providers list: enable/disable and poll interval per provider.
 struct ProvidersSettingsView: View {
     @Bindable var viewModel: AppViewModel
+    @State private var configuringProviderID: String?
 
     var body: some View {
         List {
@@ -140,10 +141,25 @@ struct ProvidersSettingsView: View {
                     Text("\(provider.pollIntervalSec / 60) min")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                    
+                    Button {
+                        configuringProviderID = provider.id
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .foregroundStyle(.tint)
+                    }
+                    .buttonStyle(.borderless)
+                    .help("Configure settings and credentials")
                 }
             }
         }
         .navigationTitle("Providers")
+        .sheet(item: Binding(
+            get: { configuringProviderID.map { IdentifiableString(id: $0) } },
+            set: { configuringProviderID = $0?.id }
+        )) { configItem in
+            ConfigureProviderSheet(providerID: configItem.id, viewModel: viewModel)
+        }
     }
 
     private func enabledBinding(_ id: String) -> Binding<Bool> {
@@ -157,6 +173,106 @@ struct ProvidersSettingsView: View {
                 }
             }
         )
+    }
+}
+
+struct IdentifiableString: Identifiable {
+    let id: String
+}
+
+struct ConfigureProviderSheet: View {
+    let providerID: String
+    var viewModel: AppViewModel
+    @Environment(\.dismiss) var dismiss
+
+    @State private var name: String = ""
+    @State private var pollIntervalMinutes: Int = 5
+    @State private var apiKey: String = ""
+    @State private var baseURL: String = ""
+    @State private var userID: String = ""
+    @State private var groupID: String = ""
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("General") {
+                    TextField("Display Name", text: $name)
+                    Picker("Poll Interval", selection: $pollIntervalMinutes) {
+                        Text("1 min").tag(1)
+                        Text("3 min").tag(3)
+                        Text("5 min").tag(5)
+                        Text("10 min").tag(10)
+                        Text("15 min").tag(15)
+                        Text("30 min").tag(30)
+                    }
+                }
+                
+                Section("Security / Credentials") {
+                    SecureField("API Key / Token", text: $apiKey)
+                }
+
+                if isRelay {
+                    Section("Relay Settings") {
+                        TextField("Base URL", text: $baseURL)
+                        TextField("User ID (Optional)", text: $userID)
+                        TextField("Group ID (Optional)", text: $groupID)
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            .navigationTitle("Configure \(name)")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        save()
+                        dismiss()
+                    }
+                }
+            }
+            .onAppear {
+                load()
+            }
+        }
+        .frame(width: 400, height: isRelay ? 450 : 300)
+    }
+
+    private var isRelay: Bool {
+        viewModel.config.providers.first(where: { $0.id == providerID })?.isRelay ?? false
+    }
+
+    private func load() {
+        guard let provider = viewModel.config.providers.first(where: { $0.id == providerID }) else { return }
+        name = provider.name
+        pollIntervalMinutes = provider.pollIntervalSec / 60
+        apiKey = viewModel.getSecret(for: providerID) ?? ""
+        if let relay = provider.relayConfig {
+            baseURL = relay.baseURL
+            userID = relay.userID ?? ""
+            groupID = relay.groupID ?? ""
+        }
+    }
+
+    private func save() {
+        // Save keychain secret
+        if !apiKey.isEmpty {
+            viewModel.setSecret(apiKey, for: providerID)
+        }
+        
+        // Save config
+        viewModel.updateConfig { config in
+            if let idx = config.providers.firstIndex(where: { $0.id == providerID }) {
+                config.providers[idx].name = name
+                config.providers[idx].pollIntervalSec = pollIntervalMinutes * 60
+                if isRelay {
+                    config.providers[idx].relayConfig?.baseURL = baseURL
+                    config.providers[idx].relayConfig?.userID = userID.isEmpty ? nil : userID
+                    config.providers[idx].relayConfig?.groupID = groupID.isEmpty ? nil : groupID
+                }
+            }
+        }
     }
 }
 

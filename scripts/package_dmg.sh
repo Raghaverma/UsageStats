@@ -28,11 +28,11 @@ echo "==> Packaging $APP_NAME $VERSION (sign: $SIGN_IDENTITY)"
 rm -rf "$DIST"
 mkdir -p "$CONTENTS/MacOS" "$CONTENTS/Resources" "$CONTENTS/Frameworks"
 
-# 1. Build a universal release binary.
-echo "==> swift build -c release (universal)"
-swift build -c release --arch arm64 --arch x86_64
+# 1. Build a native release binary.
+echo "==> swift build -c release (native)"
+swift build -c release
 
-BIN_DIR="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)"
+BIN_DIR="$(swift build -c release --show-bin-path)"
 cp "$BIN_DIR/$APP_NAME" "$CONTENTS/MacOS/$APP_NAME"
 
 # 2. Copy the SwiftPM resource bundle if present.

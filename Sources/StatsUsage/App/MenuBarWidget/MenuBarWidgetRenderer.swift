@@ -147,24 +147,44 @@ enum MenuBarWidgetRenderer {
         let vPad: CGFloat = 2
         let usableH = height - vPad * 2
         let stepX = width / CGFloat(points.count - 1)
-        let path = NSBezierPath()
+        
+        var cgPoints: [CGPoint] = []
         for (i, value) in points.enumerated() {
             let px = x + stepX * CGFloat(i)
             let py = vPad + usableH * CGFloat(min(max(value, 0), 100) / 100)
-            if i == 0 { path.move(to: NSPoint(x: px, y: py)) } else { path.line(to: NSPoint(x: px, y: py)) }
+            cgPoints.append(CGPoint(x: px, y: py))
         }
+        
+        let path = NSBezierPath()
+        path.move(to: cgPoints[0])
+        
+        for i in 0..<(cgPoints.count - 1) {
+            let p0 = cgPoints[i]
+            let p1 = cgPoints[i + 1]
+            // Cubic bezier control points: horizontal tangents for a smooth curve
+            let cp1 = CGPoint(x: p0.x + stepX / 3.0, y: p0.y)
+            let cp2 = CGPoint(x: p1.x - stepX / 3.0, y: p1.y)
+            path.curve(to: p1, controlPoint1: cp1, controlPoint2: cp2)
+        }
+        
         path.lineWidth = 1.5
         path.lineJoinStyle = .round
+        path.lineCapStyle = .round
         color.setStroke(); path.stroke()
     }
 
-    /// Green (healthy/high) → yellow → red (low/unhealthy).
+    /// Premium Green (mint) → Warm Amber → Coral Red (low/unhealthy).
     static func color(forPercent percent: Double?, healthy: Bool) -> NSColor {
-        guard healthy, let pct = percent else { return .systemGray }
+        guard healthy, let pct = percent else {
+            return NSColor(red: 0.55, green: 0.55, blue: 0.57, alpha: 1.0) // Neutral Gray
+        }
         switch pct {
-        case ..<20: return .systemRed
-        case ..<50: return .systemYellow
-        default: return .systemGreen
+        case ..<20:
+            return NSColor(red: 1.0, green: 0.18, blue: 0.33, alpha: 1.0)  // Coral Red
+        case ..<50:
+            return NSColor(red: 1.0, green: 0.63, blue: 0.0, alpha: 1.0)   // Warm Amber
+        default:
+            return NSColor(red: 0.0, green: 0.90, blue: 0.46, alpha: 1.0)  // Mint Green
         }
     }
 }

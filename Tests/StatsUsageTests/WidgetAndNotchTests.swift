@@ -29,10 +29,22 @@ final class MenuBarWidgetRendererTests: XCTestCase {
     }
 
     func testColorThresholds() {
-        XCTAssertEqual(MenuBarWidgetRenderer.color(forPercent: 5, healthy: true), .systemRed)
-        XCTAssertEqual(MenuBarWidgetRenderer.color(forPercent: 35, healthy: true), .systemYellow)
-        XCTAssertEqual(MenuBarWidgetRenderer.color(forPercent: 80, healthy: true), .systemGreen)
-        XCTAssertEqual(MenuBarWidgetRenderer.color(forPercent: 80, healthy: false), .systemGray)
+        XCTAssertEqual(
+            MenuBarWidgetRenderer.color(forPercent: 5, healthy: true),
+            NSColor(red: 1.0, green: 0.18, blue: 0.33, alpha: 1.0)
+        )
+        XCTAssertEqual(
+            MenuBarWidgetRenderer.color(forPercent: 35, healthy: true),
+            NSColor(red: 1.0, green: 0.63, blue: 0.0, alpha: 1.0)
+        )
+        XCTAssertEqual(
+            MenuBarWidgetRenderer.color(forPercent: 80, healthy: true),
+            NSColor(red: 0.0, green: 0.90, blue: 0.46, alpha: 1.0)
+        )
+        XCTAssertEqual(
+            MenuBarWidgetRenderer.color(forPercent: 80, healthy: false),
+            NSColor(red: 0.55, green: 0.55, blue: 0.57, alpha: 1.0)
+        )
     }
 }
 

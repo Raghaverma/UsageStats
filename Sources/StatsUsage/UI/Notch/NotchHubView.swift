@@ -33,10 +33,25 @@ struct NotchHubView: View {
             }
         }
         .frame(width: isExpanded ? expandedWidth : collapsedWidth)
-        .background(NotchShape(bottomRadius: 16).fill(.black))
+        .background(
+            NotchShape(bottomRadius: 16)
+                .fill(.ultraThinMaterial)
+        )
         .overlay(
             NotchShape(bottomRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 0.5)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            .white.opacity(0.15),
+                            .white.opacity(0.03),
+                            .purple.opacity(0.08),
+                            .blue.opacity(0.08)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ),
+                    lineWidth: 1.0
+                )
         )
         .contentShape(NotchShape(bottomRadius: 16))
         .onHover { hovering in
@@ -149,11 +164,16 @@ struct NotchHubView: View {
 
     private func color(for snap: UsageSnapshot) -> Color {
         let pct = snap.remainingPercent ?? snap.quotaWindows.first?.remainingPercent
-        guard snap.status == .ok, let pct else { return .gray }
+        guard snap.status == .ok, let pct else {
+            return Color(nsColor: NSColor(red: 0.55, green: 0.55, blue: 0.57, alpha: 1.0))
+        }
         switch pct {
-        case ..<20: return .red
-        case ..<50: return .yellow
-        default: return .green
+        case ..<20:
+            return Color(nsColor: NSColor(red: 1.0, green: 0.18, blue: 0.33, alpha: 1.0))
+        case ..<50:
+            return Color(nsColor: NSColor(red: 1.0, green: 0.63, blue: 0.0, alpha: 1.0))
+        default:
+            return Color(nsColor: NSColor(red: 0.0, green: 0.90, blue: 0.46, alpha: 1.0))
         }
     }
 }
@@ -162,6 +182,8 @@ struct NotchHubView: View {
 private struct NotchProviderRow: View {
     let snapshot: UsageSnapshot
     let name: String
+
+    @State private var animatedPercent: Double = 0
 
     private var percent: Double? {
         snapshot.remainingPercent ?? snapshot.quotaWindows.first?.remainingPercent
@@ -172,11 +194,21 @@ private struct NotchProviderRow: View {
             ZStack {
                 Circle().stroke(Color.white.opacity(0.15), lineWidth: 3)
                 Circle()
-                    .trim(from: 0, to: CGFloat((percent ?? 0) / 100))
+                    .trim(from: 0, to: CGFloat(animatedPercent / 100))
                     .stroke(ringColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                     .rotationEffect(.degrees(-90))
             }
             .frame(width: 22, height: 22)
+            .onAppear {
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.75).delay(0.05)) {
+                    animatedPercent = percent ?? 0
+                }
+            }
+            .onChange(of: percent) { _, newValue in
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.75)) {
+                    animatedPercent = newValue ?? 0
+                }
+            }
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(name).font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
@@ -194,11 +226,16 @@ private struct NotchProviderRow: View {
     }
 
     private var ringColor: Color {
-        guard snapshot.status == .ok, let pct = percent else { return .gray }
+        guard snapshot.status == .ok, let pct = percent else {
+            return Color(nsColor: NSColor(red: 0.55, green: 0.55, blue: 0.57, alpha: 1.0))
+        }
         switch pct {
-        case ..<20: return .red
-        case ..<50: return .yellow
-        default: return .green
+        case ..<20:
+            return Color(nsColor: NSColor(red: 1.0, green: 0.18, blue: 0.33, alpha: 1.0))
+        case ..<50:
+            return Color(nsColor: NSColor(red: 1.0, green: 0.63, blue: 0.0, alpha: 1.0))
+        default:
+            return Color(nsColor: NSColor(red: 0.0, green: 0.90, blue: 0.46, alpha: 1.0))
         }
     }
 }

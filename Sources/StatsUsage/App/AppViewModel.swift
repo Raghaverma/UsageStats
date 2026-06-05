@@ -149,4 +149,28 @@ final class AppViewModel {
         rebuildProviders()
         scheduler.restart(providers: scheduleDescriptors())
     }
+
+    /// Securely writes a secret/API key to the Keychain and binds the coordinates to the provider.
+    func setSecret(_ value: String, for providerID: String) {
+        guard let provider = config.providers.first(where: { $0.id == providerID }) else { return }
+        let service = provider.auth.keychainService ?? "com.statsusage.\(providerID)"
+        let account = provider.auth.keychainAccount ?? "default"
+        try? keychain.setSecret(value, service: service, account: account)
+        
+        updateConfig { config in
+            if let idx = config.providers.firstIndex(where: { $0.id == providerID }) {
+                config.providers[idx].auth.kind = .bearer
+                config.providers[idx].auth.keychainService = service
+                config.providers[idx].auth.keychainAccount = account
+            }
+        }
+    }
+
+    /// Reads the secret/API key associated with a provider from the Keychain.
+    func getSecret(for providerID: String) -> String? {
+        guard let provider = config.providers.first(where: { $0.id == providerID }),
+              let service = provider.auth.keychainService,
+              let account = provider.auth.keychainAccount else { return nil }
+        return try? keychain.secret(service: service, account: account)
+    }
 }

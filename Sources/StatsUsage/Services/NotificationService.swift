@@ -10,9 +10,11 @@ final class NotificationService {
 
     init() {}
 
-    func requestAuthorization() {
+    nonisolated func requestAuthorization() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, _ in
-            Task { @MainActor in self.authorized = granted }
+            Task { @MainActor in
+                self.authorized = granted
+            }
         }
     }
 

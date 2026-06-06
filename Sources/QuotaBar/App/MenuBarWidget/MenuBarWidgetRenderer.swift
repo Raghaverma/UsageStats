@@ -1,5 +1,5 @@
 import AppKit
-import StatsUsagePresentation
+import QuotaBarPresentation
 
 /// Draws Stats-style menu-bar widgets (percent / bar / sparkline / ring) for a set
 /// of entries into a single `NSImage` sized to fit. Colors are resolved for the

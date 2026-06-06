@@ -1,5 +1,5 @@
 import Foundation
-import StatsUsageDomain
+import QuotaBarDomain
 
 /// Applies a manifest's `extract` rules to a decoded JSON response, producing a
 /// `UsageSnapshot`. Pure — gets unit tests against recorded fixtures.

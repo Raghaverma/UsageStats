@@ -1,5 +1,5 @@
 import Foundation
-import StatsUsageDomain
+import QuotaBarDomain
 
 /// Reads local Gemini CLI login state (`~/.gemini/settings.json` and `~/.gemini/oauth_creds.json`)
 /// and queries the Google Cloud Code Assist usage endpoints to report account quota.
@@ -441,7 +441,7 @@ final class GeminiProvider: UsageProvider, @unchecked Sendable {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-        request.setValue("StatsUsage", forHTTPHeaderField: "User-Agent")
+        request.setValue("QuotaBar", forHTTPHeaderField: "User-Agent")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, response) = try await session.data(for: request)
@@ -472,7 +472,7 @@ final class GeminiProvider: UsageProvider, @unchecked Sendable {
         request.timeoutInterval = 15
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue("StatsUsage", forHTTPHeaderField: "User-Agent")
+        request.setValue("QuotaBar", forHTTPHeaderField: "User-Agent")
 
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse,

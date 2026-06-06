@@ -1,5 +1,5 @@
 import SwiftUI
-import StatsUsageDomain
+import QuotaBarDomain
 
 /// Sidebar + detail settings layout. Uses a plain HSplitView-equivalent so
 /// macOS never injects a sidebar-toggle toolbar button.

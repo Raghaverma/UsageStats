@@ -1,6 +1,6 @@
 import XCTest
-import StatsUsageDomain
-@testable import StatsUsage
+import QuotaBarDomain
+@testable import QuotaBar
 
 final class ClaudeProviderTests: XCTestCase {
     private static func defaultOfficialClaude() -> ProviderDescriptor {

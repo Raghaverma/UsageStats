@@ -91,14 +91,14 @@ jobs:
           VERSION="v${{ steps.version.outputs.version }}"
           echo "Publishing release $VERSION..."
           gh release create "$VERSION" \
-            dist/StatsUsage.dmg \
-            dist/StatsUsage-macOS.zip \
+            dist/QuotaBar.dmg \
+            dist/QuotaBar-macOS.zip \
             dist/latest.json \
             --title "$VERSION" \
             --generate-notes || \
           gh release upload "$VERSION" \
-            dist/StatsUsage.dmg \
-            dist/StatsUsage-macOS.zip \
+            dist/QuotaBar.dmg \
+            dist/QuotaBar-macOS.zip \
             dist/latest.json \
             --clobber
 

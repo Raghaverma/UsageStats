@@ -1,10 +1,10 @@
 <div align="center">
 
-# StatsUsage
+# QuotaBar
 
-**Say hello to StatsUsage, the coolest way to make your macOS menu bar and notch the unified command center for all your AI subscription quotas!**
+**Say hello to QuotaBar, the coolest way to make your macOS menu bar and notch the unified command center for all your AI subscription quotas!**
 
-Say goodbye to hunting down usage stats across a dozen browser tabs: with StatsUsage, your menu bar and notch transform into a dynamic live-activity readout for all your AI subscriptions. Complete with real-time countdowns for rolling reset windows, visual progress gauges, and custom alert thresholds, it keeps you in control of your usage. But that's just the start! StatsUsage offers a beautiful notch-integrated island, secure credentials stored locally in your Keychain, and a fully automated in-app update pipeline!
+Say goodbye to hunting down usage stats across a dozen browser tabs: with QuotaBar, your menu bar and notch transform into a dynamic live-activity readout for all your AI subscriptions. Complete with real-time countdowns for rolling reset windows, visual progress gauges, and custom alert thresholds, it keeps you in control of your usage. But that's just the start! QuotaBar offers a beautiful notch-integrated island, secure credentials stored locally in your Keychain, and a fully automated in-app update pipeline!
 
 [![CI](https://github.com/Raghaverma/UsageStats/actions/workflows/ci.yml/badge.svg)](https://github.com/Raghaverma/UsageStats/actions/workflows/ci.yml)
 [![Release](https://github.com/Raghaverma/UsageStats/actions/workflows/release.yml/badge.svg)](https://github.com/Raghaverma/UsageStats/actions/workflows/release.yml)
@@ -25,20 +25,20 @@ Say goodbye to hunting down usage stats across a dozen browser tabs: with StatsU
 
 ### Option 1: Download and Install Manually
 
-1. Download **`StatsUsage.dmg`** from the [Latest GitHub Release](https://github.com/Raghaverma/UsageStats/releases/latest).
-2. Open the downloaded `.dmg` disk image and drag **StatsUsage** into your **Applications** folder.
+1. Download **`QuotaBar.dmg`** from the [Latest GitHub Release](https://github.com/Raghaverma/UsageStats/releases/latest).
+2. Open the downloaded `.dmg` disk image and drag **QuotaBar** into your **Applications** folder.
 
 > [!IMPORTANT]
-> We don't have an Apple Developer account (yet 👀), so macOS will warn you that StatsUsage is from an unidentified developer on first launch. This is expected behavior.
+> We don't have an Apple Developer account (yet 👀), so macOS will warn you that QuotaBar is from an unidentified developer on first launch. This is expected behavior.
 >
 > You'll need to bypass this before the app will open. You only need to do this once. Use one of the methods below.
 
 #### Recommended: Terminal (Always Works)
 This is the quickest and easiest method. It only requires a single command and works consistently for all users. System Settings can sometimes fail and won't work for non-admin users.
 
-After moving StatsUsage to your Applications folder, run:
+After moving QuotaBar to your Applications folder, run:
 ```bash
-xattr -dr com.apple.quarantine /Applications/StatsUsage.app
+xattr -dr com.apple.quarantine /Applications/QuotaBar.app
 ```
 Then open the app normally.
 
@@ -46,13 +46,13 @@ Then open the app normally.
 1. Try to open the app — you'll see a security warning.
 2. Click **OK** to dismiss it.
 3. Open **System Settings > Privacy & Security**.
-4. Scroll to the bottom and click **Open Anyway** next to the StatsUsage warning.
+4. Scroll to the bottom and click **Open Anyway** next to the QuotaBar warning.
 5. Confirm if prompted.
 
 ---
 
 ## 🔄 Automatic In-App Updates
-StatsUsage features a **fully automated, over-the-air update pipeline**:
+QuotaBar features a **fully automated, over-the-air update pipeline**:
 * **Silent Background Checks**: Every time you launch the app, it checks the GitHub release manifest (`latest.json`) in the background. If a newer version is published, it alerts you via a macOS system notification.
 * **One-Click Installation**: Go to **Settings → About**, click **Download and Install Update**, and the app will automatically download the latest ZIP, verify its integrity (via SHA256 checksum), swap the bundle, and relaunch the application for you. You never need to download the DMG again!
 * **Toggle Auto-Checks**: You can enable or disable background update checks at any time in **Settings → General → Updates**.
@@ -129,7 +129,7 @@ We would like to express our gratitude to the authors and maintainers of the ope
 
 * **SwiftUI & AppKit**: For making us look like coding wizards.
 * **macOS System Services**: For providing a secure Keychain and native system APIs.
-* **You**: For being awesome and checking out StatsUsage!
+* **You**: For being awesome and checking out QuotaBar!
 
 ---
 

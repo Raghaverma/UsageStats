@@ -13,7 +13,7 @@ final class SettingsWindowController {
             backing: .buffered,
             defer: false
         )
-        window.title = "StatsUsage Settings"
+        window.title = "QuotaBar Settings"
         window.titlebarAppearsTransparent = false
         window.contentMinSize = NSSize(width: 640, height: 460)
         // Hide the toolbar area entirely — no sidebar toggle, no extra chrome.

@@ -33,8 +33,8 @@ manifest = {
     "release_url": f"https://github.com/{owner_repo}/releases/tag/v{version}",
     "notes_url": f"https://github.com/{owner_repo}/releases/tag/v{version}",
     "assets": {
-        "macos_zip": asset("StatsUsage-macOS.zip"),
-        "macos_dmg": asset("StatsUsage.dmg"),
+        "macos_zip": asset("QuotaBar-macOS.zip"),
+        "macos_dmg": asset("QuotaBar.dmg"),
     },
 }
 

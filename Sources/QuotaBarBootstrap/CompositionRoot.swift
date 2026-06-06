@@ -1,8 +1,8 @@
 import Foundation
-import StatsUsageDomain
-import StatsUsageApplication
-import StatsUsageFeatures
-import StatsUsagePresentation
+import QuotaBarDomain
+import QuotaBarApplication
+import QuotaBarFeatures
+import QuotaBarPresentation
 
 /// The composition root — a small façade wiring Features/Application/Presentation
 /// together. The executable target owns the AppKit/SwiftUI side and talks to this.

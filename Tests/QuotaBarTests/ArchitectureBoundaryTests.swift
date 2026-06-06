@@ -25,7 +25,7 @@ final class ArchitectureBoundaryTests: XCTestCase {
 
     func testDomainDoesNotImportUIFrameworks() throws {
         let domainDir = packageRoot()
-            .appendingPathComponent("Sources/StatsUsageDomain")
+            .appendingPathComponent("Sources/QuotaBarDomain")
         let files = swiftFiles(in: domainDir)
         XCTAssertFalse(files.isEmpty, "Expected to find Domain source files")
         let forbidden = ["import AppKit", "import SwiftUI", "import UserNotifications"]
@@ -42,7 +42,7 @@ final class ArchitectureBoundaryTests: XCTestCase {
 
     func testApplicationLayerStaysUIFree() throws {
         let appDir = packageRoot()
-            .appendingPathComponent("Sources/StatsUsageApplication")
+            .appendingPathComponent("Sources/QuotaBarApplication")
         for file in swiftFiles(in: appDir) {
             let contents = try String(contentsOf: file, encoding: .utf8)
             XCTAssertFalse(contents.contains("import AppKit"),

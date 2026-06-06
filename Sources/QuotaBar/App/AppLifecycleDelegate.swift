@@ -12,10 +12,10 @@ final class AppLifecycleDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)   // menu bar only
 
         guard SingleInstanceLock.shared.acquire() else {
-            // Another StatsUsage is already running. Make the early exit obvious in
+            // Another QuotaBar is already running. Make the early exit obvious in
             // the console instead of a mysterious "exit code 0".
-            NSLog("[StatsUsage] Another instance is already running — quitting this one. " +
-                  "Run `pkill StatsUsage` to stop it, then relaunch.")
+            NSLog("[QuotaBar] Another instance is already running — quitting this one. " +
+                  "Run `pkill QuotaBar` to stop it, then relaunch.")
             NSApp.terminate(nil)
             return
         }

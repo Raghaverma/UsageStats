@@ -1,5 +1,5 @@
 import Foundation
-import StatsUsageDomain
+import QuotaBarDomain
 
 /// Reads local Codex CLI login state (`~/.codex/auth.json`) and queries the official
 /// ChatGPT wham usage endpoint to report actual account quota and windows dynamically.

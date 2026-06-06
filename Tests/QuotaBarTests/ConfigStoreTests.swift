@@ -1,12 +1,12 @@
 import XCTest
-@testable import StatsUsage
+@testable import QuotaBar
 
 final class ConfigStoreTests: XCTestCase {
     private var tempDir: URL!
 
     override func setUpWithError() throws {
         tempDir = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("StatsUsageTests-\(UUID().uuidString)")
+            .appendingPathComponent("QuotaBarTests-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
     }
 

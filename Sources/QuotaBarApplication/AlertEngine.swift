@@ -1,5 +1,5 @@
 import Foundation
-import StatsUsageDomain
+import QuotaBarDomain
 
 /// Pure decision function: given the prior state and a new snapshot, decide
 /// whether (and why) to fire an alert. No side effects — trivially unit-testable.

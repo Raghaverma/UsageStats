@@ -1,5 +1,5 @@
 import AppKit
-import StatsUsagePresentation
+import QuotaBarPresentation
 
 /// Wraps an `NSStatusItem` button. The critical optimization: compute a render
 /// signature and only redraw when it changes, so a resident app isn't a battery drain.
@@ -32,7 +32,7 @@ final class StatusItemController {
         guard let button = statusItem.button else { return false }
         if entries.isEmpty {
             button.image = nil
-            button.title = "StatsUsage"
+            button.title = "QuotaBar"
             return true
         }
         button.title = ""

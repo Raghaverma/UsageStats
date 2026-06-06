@@ -1,6 +1,6 @@
 # Providers
 
-StatsUsage supports two families of providers.
+QuotaBar supports two families of providers.
 
 ## Official (first-party)
 
@@ -17,10 +17,10 @@ endpoints. Each can expose several source modes (`api`, `cli`, `web`, `auto`).
 The `PlaceholderProvider` keeps the factory's "every `ProviderType` is registered"
 precondition satisfiable while honestly reporting the provider as unavailable.
 
-StatsUsage labels Codex, Claude, and Gemini as experimental because they depend on
+QuotaBar labels Codex, Claude, and Gemini as experimental because they depend on
 locally installed CLI authentication formats and provider endpoints that can change.
 Credential files are read-only by default; users must explicitly opt in before
-StatsUsage persists refreshed tokens back to those files.
+QuotaBar persists refreshed tokens back to those files.
 
 ## Relay (third-party, NewAPI-style)
 

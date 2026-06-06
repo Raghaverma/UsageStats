@@ -1,5 +1,5 @@
 import Foundation
-import StatsUsageDomain
+import QuotaBarDomain
 
 enum AppLanguage: String, Codable, Sendable { case zhHans, en }
 

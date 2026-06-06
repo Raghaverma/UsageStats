@@ -5,7 +5,7 @@ final class SingleInstanceLock: @unchecked Sendable {
     static let shared = SingleInstanceLock()
 
     private var fileDescriptor: Int32 = -1
-    private let lockPath = NSTemporaryDirectory() + "com.statsusage.app.lock"
+    private let lockPath = NSTemporaryDirectory() + "com.quotabar.app.lock"
 
     private init() {}
 

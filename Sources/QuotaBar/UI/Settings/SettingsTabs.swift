@@ -1,5 +1,5 @@
 import Charts
-import StatsUsageDomain
+import QuotaBarDomain
 import SwiftUI
 
 /// General preferences: launch at login, privacy, updates, and resource mode.
@@ -12,7 +12,7 @@ struct GeneralSettingsView: View {
                 Toggle(isOn: launchAtLoginBinding) {
                     SettingRowLabel(icon: "power", color: .green,
                                     title: "Launch at login",
-                                    subtitle: "Start StatsUsage automatically when you sign in")
+                                    subtitle: "Start QuotaBar automatically when you sign in")
                 }
             } header: {
                 Text("Startup")
@@ -22,7 +22,7 @@ struct GeneralSettingsView: View {
                 Toggle(isOn: autoUpdateBinding) {
                     SettingRowLabel(icon: "arrow.triangle.2.circlepath", color: .purple,
                                     title: "Automatically check for updates",
-                                    subtitle: "Keep StatsUsage fresh with the latest features")
+                                    subtitle: "Keep QuotaBar fresh with the latest features")
                 }
             } header: {
                 Text("Updates")
@@ -485,10 +485,10 @@ struct ConfigureProviderSheet: View {
                                 Text(mode.title).tag(mode)
                             }
                         }
-                        Text("StatsUsage detects this provider’s local CLI login. No credential is stored in StatsUsage.")
+                        Text("QuotaBar detects this provider’s local CLI login. No credential is stored in QuotaBar.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        Toggle("Allow StatsUsage to update refreshed CLI credentials",
+                        Toggle("Allow QuotaBar to update refreshed CLI credentials",
                                isOn: $allowCredentialFileUpdates)
                         Button("Test Connection") {
                             viewModel.testConnection(providerID: providerID)
@@ -625,7 +625,7 @@ struct AboutSettingsView: View {
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
 
             VStack(spacing: 4) {
-                Text("StatsUsage").font(.title.bold())
+                Text("QuotaBar").font(.title.bold())
                 Text("Version \(AppVersion.current)")
                     .font(.callout)
                     .foregroundStyle(.secondary)
@@ -670,7 +670,7 @@ struct AboutSettingsView: View {
                         HStack(spacing: 6) {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundStyle(.green)
-                            Text("StatsUsage is up to date")
+                            Text("QuotaBar is up to date")
                                 .bold()
                         }
                         Button("Check Again") {
@@ -770,7 +770,7 @@ struct AboutSettingsView: View {
 
             Spacer()
 
-            Text("© 2026 StatsUsage · MIT License")
+            Text("© 2026 QuotaBar · MIT License")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
                 .padding(.bottom, 8)

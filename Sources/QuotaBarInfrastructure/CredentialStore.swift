@@ -1,5 +1,5 @@
 import Foundation
-import StatsUsageDomain
+import QuotaBarDomain
 
 /// A credential-store seam. The executable provides a Keychain-backed conformer;
 /// tests provide an in-memory one. Keeps the secret-access boundary explicit.

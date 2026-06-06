@@ -1,9 +1,9 @@
-# Extending StatsUsage
+# Extending QuotaBar
 
 ## Add a relay (third-party) site — no code
 
 Most NewAPI-style proxy sites need **only a JSON manifest**. Drop a file under
-`Sources/StatsUsage/Resources/RelayAdapters/<your-site>.json` describing the
+`Sources/QuotaBar/Resources/RelayAdapters/<your-site>.json` describing the
 endpoints and `extract` rules, then add a provider whose `relayConfig.adapterID`
 matches the manifest `id`.
 
@@ -32,8 +32,8 @@ Add a parsing test that feeds a recorded JSON fixture into
 
 ## Add an official provider — code
 
-1. Add a case to `ProviderType` in `StatsUsageDomain`.
-2. Implement a `UsageProvider` in `Sources/StatsUsage/Providers/`. Keep request
+1. Add a case to `ProviderType` in `QuotaBarDomain`.
+2. Implement a `UsageProvider` in `Sources/QuotaBar/Providers/`. Keep request
    building / auth / parsing in the provider; reuse shared runtimes for caching and
    credential refresh.
 3. Register it in `ProviderFactoryRegistry.makeDefaultMakers()`. The registry's

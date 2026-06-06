@@ -1,6 +1,6 @@
 import SwiftUI
-import StatsUsageDomain
-import StatsUsagePresentation
+import QuotaBarDomain
+import QuotaBarPresentation
 
 /// The Dynamic-Island-style hub. Collapsed it straddles the notch with a compact
 /// readout on each ear; on hover it expands downward into a live usage panel.

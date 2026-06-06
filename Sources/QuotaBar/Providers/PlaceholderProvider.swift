@@ -1,5 +1,5 @@
 import Foundation
-import StatsUsageDomain
+import QuotaBarDomain
 
 /// A safe stand-in for provider types not yet given a bespoke implementation. It
 /// keeps the factory's "every ProviderType is registered" precondition satisfiable

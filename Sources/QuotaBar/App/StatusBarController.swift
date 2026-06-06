@@ -1,8 +1,8 @@
 import AppKit
 import SwiftUI
 import Observation
-import StatsUsageDomain
-import StatsUsagePresentation
+import QuotaBarDomain
+import QuotaBarPresentation
 
 /// Orchestrates the menu-bar presence: owns the status item, a popover hosting the
 /// SwiftUI menu, and observes the view model to re-render the status item on change.

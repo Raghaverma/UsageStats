@@ -1,6 +1,6 @@
 import XCTest
-import StatsUsagePresentation
-@testable import StatsUsage
+import QuotaBarPresentation
+@testable import QuotaBar
 
 final class MenuBarWidgetRendererTests: XCTestCase {
     private func entry(_ pct: Double?) -> StatusBarDisplayEntry {

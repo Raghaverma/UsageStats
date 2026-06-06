@@ -63,8 +63,8 @@ jobs:
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: StatsUsage-CI-${{ github.sha }}
+          name: QuotaBar-CI-${{ github.sha }}
           path: |
-            dist/StatsUsage-macOS.zip
-            dist/StatsUsage.dmg
+            dist/QuotaBar-macOS.zip
+            dist/QuotaBar.dmg
           retention-days: 7

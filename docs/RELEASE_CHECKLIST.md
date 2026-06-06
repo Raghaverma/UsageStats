@@ -5,7 +5,7 @@
 2. **Bump the version** — set `VERSION` (or pass `APP_VERSION`). Use semantic
    `X.Y.Z`.
 3. **Smoke-test the bundle** — `./scripts/package_dmg.sh`, then open
-   `dist/StatsUsage.app` and confirm the menu-bar item appears and refreshes.
+   `dist/QuotaBar.app` and confirm the menu-bar item appears and refreshes.
 4. **Tag & push** — `git tag vX.Y.Z && git push origin vX.Y.Z`. The `release.yml`
    workflow then:
    - builds the universal DMG + ZIP,

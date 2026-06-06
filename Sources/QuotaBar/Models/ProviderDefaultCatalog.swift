@@ -1,5 +1,5 @@
 import Foundation
-import StatsUsageDomain
+import QuotaBarDomain
 
 /// Seeds the default set of providers for a fresh install. Kept additive so new
 /// app versions can introduce providers without disturbing existing configs.

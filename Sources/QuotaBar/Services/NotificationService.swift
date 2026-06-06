@@ -1,6 +1,6 @@
 import Foundation
 import UserNotifications
-import StatsUsageApplication
+import QuotaBarApplication
 
 /// Wraps `UNUserNotificationCenter`: request authorization once, post on demand.
 /// The decision logic lives in `AlertEngine`; this only delivers.
@@ -31,7 +31,7 @@ final class NotificationService {
             body = "\(providerName): authentication expired — please re-authorize."
         }
         let content = UNMutableNotificationContent()
-        content.title = "StatsUsage"
+        content.title = "QuotaBar"
         content.body = body
         let request = UNNotificationRequest(
             identifier: UUID().uuidString,

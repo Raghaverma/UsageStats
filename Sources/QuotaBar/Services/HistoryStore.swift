@@ -10,7 +10,7 @@ final class HistoryStore: @unchecked Sendable {
         let directory = baseDirectoryURL ?? (
             fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
                 ?? URL(fileURLWithPath: NSTemporaryDirectory())
-        ).appendingPathComponent("StatsUsage", isDirectory: true)
+        ).appendingPathComponent("QuotaBar", isDirectory: true)
         try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
         fileURL = directory.appendingPathComponent("usage-history.json")
     }

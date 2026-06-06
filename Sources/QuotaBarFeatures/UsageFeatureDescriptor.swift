@@ -1,6 +1,6 @@
 import Foundation
-import StatsUsageDomain
-import StatsUsagePresentation
+import QuotaBarDomain
+import QuotaBarPresentation
 
 /// Assembles a provider id + title into a feature descriptor, and builds the
 /// summary view-state the UI consumes.

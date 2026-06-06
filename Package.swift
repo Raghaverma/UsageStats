@@ -2,39 +2,39 @@
 import PackageDescription
 
 let package = Package(
-    name: "StatsUsage",
+    name: "QuotaBar",
     platforms: [.macOS(.v14)],
     products: [
-        .executable(name: "StatsUsage", targets: ["StatsUsage"])
+        .executable(name: "QuotaBar", targets: ["QuotaBar"])
     ],
     targets: [
-        .target(name: "StatsUsageDomain"),
-        .target(name: "StatsUsageInfrastructure", dependencies: ["StatsUsageDomain"]),
-        .target(name: "StatsUsageProviders", dependencies: ["StatsUsageDomain"]),
-        .target(name: "StatsUsageApplication", dependencies: ["StatsUsageDomain"]),
-        .target(name: "StatsUsagePresentation", dependencies: ["StatsUsageDomain"]),
-        .target(name: "StatsUsageFeatures", dependencies: [
-            "StatsUsageDomain", "StatsUsageApplication", "StatsUsagePresentation"
+        .target(name: "QuotaBarDomain"),
+        .target(name: "QuotaBarInfrastructure", dependencies: ["QuotaBarDomain"]),
+        .target(name: "QuotaBarProviders", dependencies: ["QuotaBarDomain"]),
+        .target(name: "QuotaBarApplication", dependencies: ["QuotaBarDomain"]),
+        .target(name: "QuotaBarPresentation", dependencies: ["QuotaBarDomain"]),
+        .target(name: "QuotaBarFeatures", dependencies: [
+            "QuotaBarDomain", "QuotaBarApplication", "QuotaBarPresentation"
         ]),
-        .target(name: "StatsUsageBootstrap", dependencies: [
-            "StatsUsageDomain", "StatsUsageApplication",
-            "StatsUsageFeatures", "StatsUsagePresentation"
+        .target(name: "QuotaBarBootstrap", dependencies: [
+            "QuotaBarDomain", "QuotaBarApplication",
+            "QuotaBarFeatures", "QuotaBarPresentation"
         ]),
         .executableTarget(
-            name: "StatsUsage",
+            name: "QuotaBar",
             dependencies: [
-                "StatsUsageDomain", "StatsUsageInfrastructure", "StatsUsageProviders",
-                "StatsUsageApplication", "StatsUsagePresentation",
-                "StatsUsageFeatures", "StatsUsageBootstrap"
+                "QuotaBarDomain", "QuotaBarInfrastructure", "QuotaBarProviders",
+                "QuotaBarApplication", "QuotaBarPresentation",
+                "QuotaBarFeatures", "QuotaBarBootstrap"
             ],
             resources: [.process("Resources")]
         ),
         .testTarget(
-            name: "StatsUsageTests",
+            name: "QuotaBarTests",
             dependencies: [
-                "StatsUsage", "StatsUsageDomain", "StatsUsageInfrastructure",
-                "StatsUsageProviders", "StatsUsageApplication",
-                "StatsUsagePresentation", "StatsUsageFeatures", "StatsUsageBootstrap"
+                "QuotaBar", "QuotaBarDomain", "QuotaBarInfrastructure",
+                "QuotaBarProviders", "QuotaBarApplication",
+                "QuotaBarPresentation", "QuotaBarFeatures", "QuotaBarBootstrap"
             ],
             exclude: ["Fixtures"]
         )

@@ -1,5 +1,5 @@
 import Foundation
-import StatsUsageDomain
+import QuotaBarDomain
 
 /// Maps each `ProviderType` to a closure that builds the concrete provider,
 /// injecting shared dependencies. A `precondition` asserts every case is registered

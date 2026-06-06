@@ -1,6 +1,6 @@
 import Foundation
-import StatsUsageDomain
-import StatsUsageProviders
+import QuotaBarDomain
+import QuotaBarProviders
 
 /// The contract every concrete provider implements — the seam the factory and
 /// scheduler talk to.

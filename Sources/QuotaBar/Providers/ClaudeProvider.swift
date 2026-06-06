@@ -1,5 +1,5 @@
 import Foundation
-import StatsUsageDomain
+import QuotaBarDomain
 
 /// Reads local Claude CLI/App login credentials and queries Anthropic platforms to report account quota.
 final class ClaudeProvider: UsageProvider, @unchecked Sendable {
@@ -34,7 +34,7 @@ final class ClaudeProvider: UsageProvider, @unchecked Sendable {
         case .cli:
             return try await loadFromCLI()
         case .web:
-            throw ProviderError.unavailable("Claude web source mode is not supported in this version of StatsUsage")
+            throw ProviderError.unavailable("Claude web source mode is not supported in this version of QuotaBar")
         case .auto:
             do {
                 return try await loadFromAPI(forceRefresh: forceRefresh)
@@ -210,7 +210,7 @@ final class ClaudeProvider: UsageProvider, @unchecked Sendable {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
-        request.setValue("StatsUsage", forHTTPHeaderField: "User-Agent")
+        request.setValue("QuotaBar", forHTTPHeaderField: "User-Agent")
 
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else {

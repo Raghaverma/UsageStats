@@ -1,5 +1,5 @@
 import XCTest
-@testable import StatsUsage
+@testable import QuotaBar
 
 final class RelayJSONExpressionEvaluatorTests: XCTestCase {
     private func root(_ json: String) throws -> RelayJSONExpressionEvaluator.JSONValue {

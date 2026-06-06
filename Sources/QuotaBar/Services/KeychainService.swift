@@ -1,6 +1,6 @@
 import Foundation
 import Security
-import StatsUsageInfrastructure
+import QuotaBarInfrastructure
 
 /// A thin wrapper over the Security framework storing per-provider secrets keyed by
 /// `(service, account)` — exactly the coordinates held in `AuthConfig`. Includes an

@@ -1,6 +1,6 @@
 import XCTest
-import StatsUsageDomain
-@testable import StatsUsageApplication
+import QuotaBarDomain
+@testable import QuotaBarApplication
 
 final class BackoffPolicyTests: XCTestCase {
     func testBaseIntervalWithNoFailures() {

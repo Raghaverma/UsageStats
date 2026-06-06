@@ -1,6 +1,6 @@
 import SwiftUI
-import StatsUsageDomain
-import StatsUsagePresentation
+import QuotaBarDomain
+import QuotaBarPresentation
 
 /// The popover body: a card per provider plus a footer with refresh / quit.
 struct MenuContentView: View {
@@ -11,7 +11,7 @@ struct MenuContentView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("StatsUsage").font(.headline)
+                Text("QuotaBar").font(.headline)
                 Spacer()
                 Button {
                     viewModel.refreshNow()
@@ -33,7 +33,7 @@ struct MenuContentView: View {
 
             if enabledProviders.isEmpty {
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("Welcome to StatsUsage").font(.subheadline.bold())
+                    Text("Welcome to QuotaBar").font(.subheadline.bold())
                     Text("Enable a provider in Settings to begin monitoring your AI quotas.")
                         .font(.caption)
                         .foregroundStyle(.secondary)

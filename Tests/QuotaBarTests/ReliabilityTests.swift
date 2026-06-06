@@ -1,10 +1,10 @@
 import XCTest
-@testable import StatsUsage
+@testable import QuotaBar
 
 final class ReliabilityTests: XCTestCase {
     private func temporaryDirectory() throws -> URL {
         let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("StatsUsage-Reliability-\(UUID().uuidString)")
+            .appendingPathComponent("QuotaBar-Reliability-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         return url
     }
@@ -35,7 +35,7 @@ final class ReliabilityTests: XCTestCase {
 
         try AtomicCredentialFileWriter.writeJSON(["new": true], to: file)
 
-        XCTAssertTrue(FileManager.default.fileExists(atPath: file.appendingPathExtension("statsusage-backup").path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: file.appendingPathExtension("quotabar-backup").path))
         let permissions = try FileManager.default.attributesOfItem(atPath: file.path)[.posixPermissions] as? Int
         XCTAssertEqual(permissions, 0o600)
     }

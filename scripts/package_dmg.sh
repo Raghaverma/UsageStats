@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Assemble StatsUsage.app from the SwiftPM build, sign it, and produce a ZIP + DMG
+# Assemble QuotaBar.app from the SwiftPM build, sign it, and produce a ZIP + DMG
 # under dist/. Ad-hoc signed by default; set DEVELOPER_ID_APPLICATION (or
 # CODESIGN_IDENTITY) to sign with a Developer ID, and NOTARIZE_DMG=1 to notarize.
 #
@@ -15,8 +15,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-APP_NAME="StatsUsage"
-BUNDLE_ID="com.statsusage.app"
+APP_NAME="QuotaBar"
+BUNDLE_ID="com.quotabar.app"
 VERSION="${APP_VERSION:-$(cat VERSION 2>/dev/null || echo 0.1.0)}"
 DIST="$ROOT/dist"
 APP_DIR="$DIST/$APP_NAME.app"

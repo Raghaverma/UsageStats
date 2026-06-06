@@ -1,6 +1,6 @@
 import XCTest
-import StatsUsageDomain
-import StatsUsagePresentation
+import QuotaBarDomain
+import QuotaBarPresentation
 
 final class UsageSnapshotTests: XCTestCase {
     func testRemainingPercentComputation() {

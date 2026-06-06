@@ -1,5 +1,5 @@
 import Foundation
-import StatsUsageDomain
+import QuotaBarDomain
 
 /// Source mode for an official provider.
 enum OfficialSourceMode: String, Codable, CaseIterable, Sendable {

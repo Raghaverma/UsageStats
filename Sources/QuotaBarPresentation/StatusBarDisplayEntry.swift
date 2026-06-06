@@ -1,5 +1,5 @@
 import Foundation
-import StatsUsageDomain
+import QuotaBarDomain
 
 /// A single renderable unit in the menu bar (one provider's compact readout).
 public struct StatusBarDisplayEntry: Equatable, Sendable {

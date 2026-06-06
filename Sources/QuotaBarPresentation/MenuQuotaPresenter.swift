@@ -1,5 +1,5 @@
 import Foundation
-import StatsUsageDomain
+import QuotaBarDomain
 
 /// Turns a quota window into display strings. Pure and unit-tested; views stay dumb.
 public enum MenuQuotaPresenter {

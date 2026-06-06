@@ -1,5 +1,5 @@
 import Foundation
-import StatsUsageDomain
+import QuotaBarDomain
 
 /// A thin orchestration shell: resolve the manifest + credential, run the balance
 /// request, hand the bytes to the interpreter. All real logic lives in the seams.

@@ -20,7 +20,7 @@ final class ConfigStore: @unchecked Sendable {
         } else {
             let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
                 ?? URL(fileURLWithPath: NSTemporaryDirectory())
-            self.directoryURL = appSupport.appendingPathComponent("StatsUsage", isDirectory: true)
+            self.directoryURL = appSupport.appendingPathComponent("QuotaBar", isDirectory: true)
         }
         try? fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
     }

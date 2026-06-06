@@ -1,7 +1,7 @@
 import Foundation
 import Observation
-import StatsUsageDomain
-import StatsUsageApplication
+import QuotaBarDomain
+import QuotaBarApplication
 
 /// The `@MainActor @Observable` hub the UI binds to. Kept as a façade: it owns the
 /// stores, the factory, and the scheduler, and exposes the freshest snapshots.
@@ -218,7 +218,7 @@ final class AppViewModel {
     /// Securely writes a secret/API key to the Keychain and binds the coordinates to the provider.
     func setSecret(_ value: String, for providerID: String) {
         guard let provider = config.providers.first(where: { $0.id == providerID }) else { return }
-        let service = provider.auth.keychainService ?? "com.statsusage.\(providerID)"
+        let service = provider.auth.keychainService ?? "com.quotabar.\(providerID)"
         let account = provider.auth.keychainAccount ?? "default"
         do {
             try keychain.setSecret(value, service: service, account: account)

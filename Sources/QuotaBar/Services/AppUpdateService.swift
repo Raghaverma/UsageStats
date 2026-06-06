@@ -40,7 +40,7 @@ enum AppUpdateError: Error, LocalizedError {
         case .untrustedDownloadLocation: return "The update points to an untrusted download location."
         case .unexpectedAssetSize: return "The downloaded update size does not match the release manifest."
         case .invalidCodeSignature: return "The downloaded application has an invalid code signature."
-        case .wrongBundleIdentifier: return "The downloaded application is not StatsUsage."
+        case .wrongBundleIdentifier: return "The downloaded application is not QuotaBar."
         case .httpStatus(let status): return "The update server returned HTTP \(status)."
         }
     }
@@ -161,20 +161,20 @@ actor AppUpdateService {
             }
         }
         
-        let newAppURL = tempDir.appendingPathComponent("StatsUsage.app")
+        let newAppURL = tempDir.appendingPathComponent("QuotaBar.app")
         guard fileManager.fileExists(atPath: newAppURL.path) else {
             throw NSError(
                 domain: "AppUpdateService",
                 code: 404,
-                userInfo: [NSLocalizedDescriptionKey: "Extracted update did not contain StatsUsage.app"]
+                userInfo: [NSLocalizedDescriptionKey: "Extracted update did not contain QuotaBar.app"]
             )
         }
-        guard Bundle(url: newAppURL)?.bundleIdentifier == "com.statsusage.app" else {
+        guard Bundle(url: newAppURL)?.bundleIdentifier == "com.quotabar.app" else {
             throw AppUpdateError.wrongBundleIdentifier
         }
         try await verifyCodeSignature(at: newAppURL)
         
-        let backupURL = fileManager.temporaryDirectory.appendingPathComponent("StatsUsage.app.bak-\(UUID().uuidString)")
+        let backupURL = fileManager.temporaryDirectory.appendingPathComponent("QuotaBar.app.bak-\(UUID().uuidString)")
         if fileManager.fileExists(atPath: backupURL.path) {
             try? fileManager.removeItem(at: backupURL)
         }

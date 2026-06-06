@@ -31,6 +31,9 @@ final class RelayProvider: UsageProvider, @unchecked Sendable {
         guard let baseURL = URL(string: relay.baseURL), !relay.baseURL.isEmpty else {
             throw ProviderError.unavailable("Relay base URL is empty")
         }
+        guard baseURL.scheme == "https" || baseURL.host == "localhost" || baseURL.host == "127.0.0.1" else {
+            throw ProviderError.unavailable("Relay URLs must use HTTPS so credentials are not sent in plaintext")
+        }
 
         let request = try buildBalanceRequest(baseURL: baseURL, manifest: manifest, relay: relay)
         let (data, response) = try await session.data(for: request)
@@ -51,6 +54,7 @@ final class RelayProvider: UsageProvider, @unchecked Sendable {
         let url = baseURL.appendingPathComponent(manifest.balanceRequest.path)
         var request = URLRequest(url: url)
         request.httpMethod = manifest.balanceRequest.method
+        request.timeoutInterval = 20
 
         // Resolve the bearer/cookie secret from the Keychain coordinates.
         let secret = try descriptor.auth.keychainService.flatMap { service in

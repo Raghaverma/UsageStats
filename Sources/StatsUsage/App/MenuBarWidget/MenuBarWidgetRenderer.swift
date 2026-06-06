@@ -84,7 +84,7 @@ enum MenuBarWidgetRenderer {
             drawText(entry.percentText, at: originX + glyphWidth + glyphValueGap, color: fg)
 
         case .sparkline:
-            drawSparkline(history: history, current: entry.remainingPercent, at: originX, width: 30, color: accent)
+            drawSparkline(history: Array(history.suffix(30)), current: entry.remainingPercent, at: originX, width: 30, color: accent)
             drawText(entry.percentText, at: originX + 30 + glyphValueGap, color: fg)
 
         case .ring:

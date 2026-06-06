@@ -11,11 +11,16 @@ endpoints. Each can expose several source modes (`api`, `cli`, `web`, `auto`).
 | --- | --- | --- |
 | `codex` | Local account status | Reads `~/.codex/auth.json`; session window is a local estimate |
 | `claude` | Local account status | Same local reader as Codex for now |
-| `gemini` | Scaffolded (`api`) | Cloud Code Assist endpoints — wire OAuth + quota parsing |
+| `gemini` | Experimental local account status | Reads Gemini CLI OAuth state and Cloud Code Assist quota endpoints |
 | `copilot`, `cursor`, `windsurf`, `jetbrains`, `kiro`, `trae`, `zai`, `amp`, `microsoftCopilot`, `ollamaCloud`, `opencodeGo`, `openrouterCredits`, `openrouterAPI`, `kimi` | Placeholder | Registered against `PlaceholderProvider`; report as not-yet-implemented |
 
 The `PlaceholderProvider` keeps the factory's "every `ProviderType` is registered"
 precondition satisfiable while honestly reporting the provider as unavailable.
+
+StatsUsage labels Codex, Claude, and Gemini as experimental because they depend on
+locally installed CLI authentication formats and provider endpoints that can change.
+Credential files are read-only by default; users must explicitly opt in before
+StatsUsage persists refreshed tokens back to those files.
 
 ## Relay (third-party, NewAPI-style)
 

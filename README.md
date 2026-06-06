@@ -77,6 +77,9 @@ StatsUsage features a **fully automated, over-the-air update pipeline**:
 * 🔐 **Keychain security** — Secure storage for all sensitive tokens and API keys. 🔑
 * 🔄 **In-app updates** — Fully automated, one-click updating over the internet. ☁️
 * 🪶 **Zero dependencies** — Built purely on native Swift 6 and SwiftUI APIs. ⚡
+* 🩺 **Provider diagnostics** — Connection testing, visible refresh errors, last-updated status, and retry controls.
+* 📈 **Persistent trends** — Menu-bar sparklines and consumption estimates survive application relaunches.
+* 🛡️ **Safer credentials and updates** — Keychain-backed relay secrets, opt-in CLI credential writes with backups, checksum/size validation, and code-signature verification.
 
 ---
 
@@ -102,7 +105,12 @@ StatsUsage features a **fully automated, over-the-air update pipeline**:
    ```
 4. **Run the Test Suite**:
    ```bash
+   ./scripts/check_toolchain.sh
    swift test
+   ```
+   If Command Line Tools are selected instead of full Xcode, run:
+   ```bash
+   DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test
    ```
 5. **Assemble Local DMG & ZIP**:
    ```bash

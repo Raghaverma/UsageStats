@@ -8,15 +8,24 @@ import StatsUsageApplication
 @MainActor
 @Observable
 final class AppViewModel {
+    struct UserFacingError: Identifiable, Equatable {
+        let id = UUID()
+        var title: String
+        var message: String
+    }
+
     // Persisted + session state.
     private(set) var config: AppConfig
     private(set) var snapshots: [String: UsageSnapshot] = [:]
     private(set) var errors: [String: String] = [:]
+    private(set) var refreshingProviderIDs: Set<String> = []
+    var userFacingError: UserFacingError?
     private(set) var lastLoadWasLossy: Bool
 
     /// Rolling per-provider remaining-percent history that feeds the sparkline widget.
     private(set) var usageHistory: [String: [Double]] = [:]
-    private let maxHistory = 30
+    /// Roughly one week at the default five-minute cadence.
+    private let maxHistory = 2_016
 
     // Update State
     enum UpdateState: Sendable, Equatable {
@@ -39,6 +48,8 @@ final class AppViewModel {
     private let factory: ProviderFactoryRegistry
     private let scheduler: ProviderRefreshScheduler
     private let notificationService: NotificationService
+    private let historyStore: HistoryStore
+    private let launchAtLoginService = LaunchAtLoginService()
 
     private var providers: [String: any UsageProvider] = [:]
     private var consecutiveFailures: [String: Int] = [:]
@@ -47,7 +58,8 @@ final class AppViewModel {
         configStore: ConfigStore = ConfigStore(),
         keychain: KeychainService = KeychainService(),
         relayRegistry: RelayAdapterRegistry? = nil,
-        notificationService: NotificationService = NotificationService()
+        notificationService: NotificationService = NotificationService(),
+        historyStore: HistoryStore = HistoryStore()
     ) {
         self.configStore = configStore
         self.keychain = keychain
@@ -55,8 +67,18 @@ final class AppViewModel {
         self.factory = ProviderFactoryRegistry()
         self.scheduler = ProviderRefreshScheduler()
         self.notificationService = notificationService
+        self.historyStore = historyStore
         self.config = (try? configStore.load()) ?? .default
         self.lastLoadWasLossy = configStore.lastLoadWasLossy
+        do {
+            self.usageHistory = try historyStore.load()
+        } catch {
+            self.usageHistory = [:]
+            self.userFacingError = UserFacingError(
+                title: "Couldn’t load usage history",
+                message: error.localizedDescription
+            )
+        }
         rebuildProviders()
     }
 
@@ -72,6 +94,7 @@ final class AppViewModel {
 
     /// Start the poll loop.
     func start() {
+        notificationService.requestAuthorization()
         scheduler.restart(providers: scheduleDescriptors())
     }
 
@@ -86,7 +109,10 @@ final class AppViewModel {
             let id = descriptor.id
             return ProviderRefreshScheduleDescriptor(
                 id: id,
-                pollIntervalSec: descriptor.pollIntervalSec,
+                pollIntervalSec: max(
+                    descriptor.pollIntervalSec,
+                    config.resourceMode.backgroundPollIntervalSeconds
+                ),
                 enabled: true,
                 refresh: { [weak self] force in
                     await self?.performRefresh(id: id, force: force)
@@ -101,6 +127,8 @@ final class AppViewModel {
     private func performRefresh(id: String, force: Bool) async {
         guard let provider = providers[id],
               let descriptor = config.providers.first(where: { $0.id == id }) else { return }
+        refreshingProviderIDs.insert(id)
+        defer { refreshingProviderIDs.remove(id) }
         do {
             let snapshot = try await provider.fetch(forceRefresh: force)
             snapshots[id] = snapshot
@@ -129,6 +157,11 @@ final class AppViewModel {
         series.append(pct)
         if series.count > maxHistory { series.removeFirst(series.count - maxHistory) }
         usageHistory[id] = series
+        do {
+            try historyStore.save(usageHistory)
+        } catch {
+            report(title: "Couldn’t save usage history", error: error)
+        }
     }
 
     private func evaluateAlerts(snapshot: UsageSnapshot, descriptor: ProviderDescriptor) {
@@ -158,8 +191,26 @@ final class AppViewModel {
     func updateConfig(_ transform: (inout AppConfig) -> Void) {
         var copy = config
         transform(&copy)
+        let launchAtLoginChanged = copy.launchAtLoginEnabled != config.launchAtLoginEnabled
         config = copy
-        try? configStore.save(copy)
+        do {
+            try configStore.save(copy)
+        } catch {
+            report(title: "Couldn’t save settings", error: error)
+        }
+        if launchAtLoginChanged {
+            do {
+                try launchAtLoginService.setEnabled(copy.launchAtLoginEnabled)
+            } catch {
+                config.launchAtLoginEnabled.toggle()
+                do {
+                    try configStore.save(config)
+                } catch {
+                    report(title: "Couldn’t restore launch-at-login setting", error: error)
+                }
+                report(title: "Couldn’t update launch at login", error: error)
+            }
+        }
         rebuildProviders()
         scheduler.restart(providers: scheduleDescriptors())
     }
@@ -169,7 +220,12 @@ final class AppViewModel {
         guard let provider = config.providers.first(where: { $0.id == providerID }) else { return }
         let service = provider.auth.keychainService ?? "com.statsusage.\(providerID)"
         let account = provider.auth.keychainAccount ?? "default"
-        try? keychain.setSecret(value, service: service, account: account)
+        do {
+            try keychain.setSecret(value, service: service, account: account)
+        } catch {
+            report(title: "Couldn’t save credential", error: error)
+            return
+        }
         
         updateConfig { config in
             if let idx = config.providers.firstIndex(where: { $0.id == providerID }) {
@@ -185,7 +241,100 @@ final class AppViewModel {
         guard let provider = config.providers.first(where: { $0.id == providerID }),
               let service = provider.auth.keychainService,
               let account = provider.auth.keychainAccount else { return nil }
-        return try? keychain.secret(service: service, account: account)
+        do {
+            return try keychain.secret(service: service, account: account)
+        } catch {
+            report(title: "Couldn’t read credential", error: error)
+            return nil
+        }
+    }
+
+    func testConnection(providerID: String) {
+        guard providers[providerID] != nil else { return }
+        Task { await performRefresh(id: providerID, force: true) }
+    }
+
+    func addRelayProvider() {
+        let id = "relay-\(UUID().uuidString.lowercased().prefix(8))"
+        updateConfig { config in
+            config.providers.append(ProviderDescriptor(
+                id: id,
+                name: "New Relay",
+                family: .thirdParty,
+                type: .relay,
+                enabled: false,
+                auth: .none,
+                relayConfig: RelayProviderConfig()
+            ))
+        }
+    }
+
+    func removeProvider(id: String) {
+        let removed = config.providers.first(where: { $0.id == id })
+        updateConfig { config in
+            config.providers.removeAll { $0.id == id }
+            config.statusBarMultiProviderIDs.removeAll { $0 == id }
+            if config.statusBarProviderID == id { config.statusBarProviderID = nil }
+            if config.notchProviderID == id { config.notchProviderID = nil }
+        }
+        snapshots[id] = nil
+        errors[id] = nil
+        usageHistory[id] = nil
+        do {
+            try historyStore.save(usageHistory)
+        } catch {
+            report(title: "Couldn’t update usage history", error: error)
+        }
+        if let service = removed?.auth.keychainService, let account = removed?.auth.keychainAccount {
+            do {
+                try keychain.deleteSecret(service: service, account: account)
+            } catch {
+                report(title: "Couldn’t remove credential", error: error)
+            }
+        }
+    }
+
+    func clearSecret(for providerID: String) {
+        guard let provider = config.providers.first(where: { $0.id == providerID }),
+              let service = provider.auth.keychainService,
+              let account = provider.auth.keychainAccount else { return }
+        do {
+            try keychain.deleteSecret(service: service, account: account)
+            updateConfig { config in
+                guard let index = config.providers.firstIndex(where: { $0.id == providerID }) else { return }
+                config.providers[index].auth = .none
+            }
+        } catch {
+            report(title: "Couldn’t remove credential", error: error)
+        }
+    }
+
+    func dismissUserFacingError() {
+        userFacingError = nil
+    }
+
+    func trendDescription(for providerID: String) -> String? {
+        guard let values = usageHistory[providerID], values.count >= 2,
+              let first = values.first, let last = values.last else { return nil }
+        let delta = last - first
+        if abs(delta) < 1 { return "Stable recently" }
+        guard delta < 0 else { return "\(Int(delta.rounded())) points recovered recently" }
+        let consumedPerSample = abs(delta) / Double(max(1, values.count - 1))
+        guard consumedPerSample > 0,
+              let provider = config.providers.first(where: { $0.id == providerID }) else {
+            return "\(Int(abs(delta).rounded())) points consumed recently"
+        }
+        let samplesRemaining = last / consumedPerSample
+        let interval = max(provider.pollIntervalSec, config.resourceMode.backgroundPollIntervalSeconds)
+        let hoursRemaining = samplesRemaining * Double(interval) / 3600
+        let estimate = hoursRemaining < 1
+            ? "\(max(1, Int((hoursRemaining * 60).rounded())))m"
+            : "\(Int(hoursRemaining.rounded()))h"
+        return "\(Int(abs(delta).rounded())) points consumed recently · ~\(estimate) at this pace"
+    }
+
+    private func report(title: String, error: Error) {
+        userFacingError = UserFacingError(title: title, message: error.localizedDescription)
     }
 
     // MARK: - App Updates

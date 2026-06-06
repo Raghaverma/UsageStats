@@ -45,7 +45,7 @@ final class CodexProvider: UsageProvider, @unchecked Sendable {
             if let refresh = refreshTokenVal, !refresh.isEmpty {
                 do {
                     let newTokens = try await refreshAuthToken(refreshToken: refresh)
-                    writeBack(accessToken: newTokens.accessToken, refreshToken: newTokens.newRefreshToken)
+                    try writeBack(accessToken: newTokens.accessToken, refreshToken: newTokens.newRefreshToken)
                     responseData = try await requestUsage(accessToken: newTokens.accessToken, accountId: accountId)
                 } catch {
                     throw ProviderError.unauthorized
@@ -176,17 +176,18 @@ final class CodexProvider: UsageProvider, @unchecked Sendable {
         return (accessToken, newRefresh)
     }
 
-    private func writeBack(accessToken: String, refreshToken: String) {
-        guard let fileData = try? Data(contentsOf: authFileURL),
-              var newObj = try? JSONSerialization.jsonObject(with: fileData) as? [String: Any] else { return }
+    private func writeBack(accessToken: String, refreshToken: String) throws {
+        guard descriptor.officialConfig?.allowCredentialFileUpdates == true else { return }
+        let fileData = try Data(contentsOf: authFileURL)
+        guard var newObj = try JSONSerialization.jsonObject(with: fileData) as? [String: Any] else {
+            throw ProviderError.invalidResponse("Codex credential file is malformed")
+        }
         var tokens = (newObj["tokens"] as? [String: Any]) ?? [:]
         tokens["access_token"] = accessToken
         tokens["refresh_token"] = refreshToken
         newObj["tokens"] = tokens
         newObj["last_refresh"] = ISO8601DateFormatter().string(from: Date())
-        if let outputData = try? JSONSerialization.data(withJSONObject: newObj, options: [.prettyPrinted]) {
-            try? outputData.write(to: authFileURL)
-        }
+        try AtomicCredentialFileWriter.writeJSON(newObj, to: authFileURL)
     }
 
     private func parseAccountLabel(data: Data) -> String? {

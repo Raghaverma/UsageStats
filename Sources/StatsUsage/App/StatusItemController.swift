@@ -52,7 +52,8 @@ final class StatusItemController {
         let parts = entries.map { entry -> String in
             // Quantize history into the signature so the sparkline redraws when the
             // trend actually moves, not on every poll that returns the same value.
-            let hist = (history[entry.providerID] ?? []).map { String(Int($0.rounded())) }.joined(separator: ",")
+            let hist = (history[entry.providerID] ?? []).suffix(30)
+                .map { String(Int($0.rounded())) }.joined(separator: ",")
             return "\(entry.providerID):\(entry.percentText):\(entry.isHealthy):[\(hist)]"
         }
         return parts.joined(separator: "|") + "#\(style.rawValue)#\(appearanceDark)"

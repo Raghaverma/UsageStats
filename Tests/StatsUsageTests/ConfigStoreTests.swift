@@ -43,8 +43,7 @@ final class ConfigStoreTests: XCTestCase {
 
         let store = ConfigStore(baseDirectoryURL: tempDir)
         let config = try store.load()
-        XCTAssertEqual(config.providers.count, 1)
-        XCTAssertEqual(config.providers.first?.id, "codex")
+        XCTAssertEqual(Set(config.providers.map(\.id)), Set(["codex", "claude", "gemini"]))
         XCTAssertTrue(store.lastLoadWasLossy)
     }
 

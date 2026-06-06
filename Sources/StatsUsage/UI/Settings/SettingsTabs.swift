@@ -1,25 +1,13 @@
-import SwiftUI
+import Charts
 import StatsUsageDomain
+import SwiftUI
 
-/// General preferences: language, launch at login, resource mode.
+/// General preferences: launch at login, privacy, updates, and resource mode.
 struct GeneralSettingsView: View {
     @Bindable var viewModel: AppViewModel
 
     var body: some View {
         Form {
-            Section {
-                Picker(selection: languageBinding) {
-                    Text("English").tag(AppLanguage.en)
-                    Text("简体中文").tag(AppLanguage.zhHans)
-                } label: {
-                    SettingRowLabel(icon: "globe", color: .blue,
-                                    title: "Language",
-                                    subtitle: "Interface display language")
-                }
-            } header: {
-                Text("Appearance")
-            }
-
             Section {
                 Toggle(isOn: launchAtLoginBinding) {
                     SettingRowLabel(icon: "power", color: .green,
@@ -49,22 +37,28 @@ struct GeneralSettingsView: View {
                 } label: {
                     SettingRowLabel(icon: "bolt.fill", color: .orange,
                                     title: "Resource mode",
-                                    subtitle: "How often providers are refreshed")
+                                    subtitle: "Minimum interval between provider refreshes")
                 }
             } header: {
                 Text("Performance")
             } footer: {
                 Text("Longer intervals reduce battery, CPU, and network usage.")
             }
+
+            Section {
+                Toggle(isOn: accountVisibilityBinding) {
+                    SettingRowLabel(icon: "person.text.rectangle", color: .blue,
+                                    title: "Show account identifiers",
+                                    subtitle: "Display account email or labels in the menu popover")
+                }
+            } header: {
+                Text("Privacy")
+            }
         }
         .formStyle(.grouped)
         .navigationTitle("General")
     }
 
-    private var languageBinding: Binding<AppLanguage> {
-        Binding(get: { viewModel.config.language },
-                set: { newValue in viewModel.updateConfig { $0.language = newValue } })
-    }
     private var launchAtLoginBinding: Binding<Bool> {
         Binding(get: { viewModel.config.launchAtLoginEnabled },
                 set: { newValue in viewModel.updateConfig { $0.launchAtLoginEnabled = newValue } })
@@ -76,6 +70,10 @@ struct GeneralSettingsView: View {
     private var resourceModeBinding: Binding<ResourceMode> {
         Binding(get: { viewModel.config.resourceMode },
                 set: { newValue in viewModel.updateConfig { $0.resourceMode = newValue } })
+    }
+    private var accountVisibilityBinding: Binding<Bool> {
+        Binding(get: { viewModel.config.showOfficialAccountEmailInMenuBar },
+                set: { newValue in viewModel.updateConfig { $0.showOfficialAccountEmailInMenuBar = newValue } })
     }
 }
 
@@ -98,6 +96,19 @@ struct MenuBarSettingsView: View {
                 }
             } header: {
                 Text("Content")
+            }
+
+            Section {
+                Toggle("Show multiple providers", isOn: multiUsageBinding)
+                if viewModel.config.statusBarMultiUsageEnabled {
+                    ForEach(viewModel.config.providers.filter(\.enabled)) { provider in
+                        Toggle(provider.name, isOn: multiProviderBinding(provider.id))
+                    }
+                }
+            } header: {
+                Text("Multiple Providers")
+            } footer: {
+                Text("Selected providers are rendered side-by-side in the menu bar.")
             }
 
             Section {
@@ -138,6 +149,26 @@ struct MenuBarSettingsView: View {
     private var appearanceBinding: Binding<StatusBarAppearanceMode> {
         Binding(get: { viewModel.config.statusBarAppearanceMode },
                 set: { newValue in viewModel.updateConfig { $0.statusBarAppearanceMode = newValue } })
+    }
+    private var multiUsageBinding: Binding<Bool> {
+        Binding(get: { viewModel.config.statusBarMultiUsageEnabled },
+                set: { newValue in viewModel.updateConfig { $0.statusBarMultiUsageEnabled = newValue } })
+    }
+    private func multiProviderBinding(_ id: String) -> Binding<Bool> {
+        Binding(
+            get: { viewModel.config.statusBarMultiProviderIDs.contains(id) },
+            set: { selected in
+                viewModel.updateConfig { config in
+                    if selected {
+                        if !config.statusBarMultiProviderIDs.contains(id) {
+                            config.statusBarMultiProviderIDs.append(id)
+                        }
+                    } else {
+                        config.statusBarMultiProviderIDs.removeAll { $0 == id }
+                    }
+                }
+            }
+        )
     }
 }
 
@@ -220,9 +251,12 @@ struct ProvidersSettingsView: View {
 
                         VStack(alignment: .leading, spacing: 1) {
                             Text(provider.name)
-                            Text(provider.type.rawValue.capitalized + " · every \(provider.pollIntervalSec / 60) min")
+                            Text(provider.type.rawValue.capitalized + " · \(provider.implementationStatus.rawValue) · every \(provider.pollIntervalSec / 60) min")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
+                            Text(statusText(provider.id))
+                                .font(.caption2)
+                                .foregroundStyle(statusColor(provider.id))
                         }
 
                         Spacer()
@@ -235,6 +269,27 @@ struct ProvidersSettingsView: View {
                         .buttonStyle(.borderless)
                         .help("Configure settings and credentials")
 
+                        Button {
+                            viewModel.testConnection(providerID: provider.id)
+                        } label: {
+                            if viewModel.refreshingProviderIDs.contains(provider.id) {
+                                ProgressView().controlSize(.mini)
+                            } else {
+                                Image(systemName: "bolt.horizontal.circle")
+                            }
+                        }
+                        .buttonStyle(.borderless)
+                        .help("Test connection")
+
+                        if provider.isRelay {
+                            Button(role: .destructive) {
+                                viewModel.removeProvider(id: provider.id)
+                            } label: {
+                                Image(systemName: "trash")
+                            }
+                            .buttonStyle(.borderless)
+                        }
+
                         Toggle("", isOn: enabledBinding(provider.id))
                             .labelsHidden()
                             .toggleStyle(.switch)
@@ -246,6 +301,16 @@ struct ProvidersSettingsView: View {
             } footer: {
                 Text("Toggle a provider on or off, or open its configuration to set credentials, poll interval, and alert thresholds.")
             }
+
+            Section {
+                Button {
+                    viewModel.addRelayProvider()
+                } label: {
+                    Label("Add Relay Provider", systemImage: "plus")
+                }
+            } footer: {
+                Text("Relay providers support NewAPI-style third-party quota endpoints.")
+            }
         }
         .formStyle(.grouped)
         .navigationTitle("Providers")
@@ -255,6 +320,21 @@ struct ProvidersSettingsView: View {
         )) { configItem in
             ConfigureProviderSheet(providerID: configItem.id, viewModel: viewModel)
         }
+    }
+
+    private func statusText(_ id: String) -> String {
+        if viewModel.refreshingProviderIDs.contains(id) { return "Testing connection…" }
+        if let error = viewModel.errors[id] { return error }
+        if let snapshot = viewModel.snapshots[id] {
+            return "Connected · updated \(snapshot.updatedAt.formatted(.relative(presentation: .numeric)))"
+        }
+        return "Not checked yet"
+    }
+
+    private func statusColor(_ id: String) -> Color {
+        if viewModel.errors[id] != nil { return .red }
+        if viewModel.snapshots[id] != nil { return .green }
+        return .secondary
     }
 
     private func enabledBinding(_ id: String) -> Binding<Bool> {
@@ -275,6 +355,87 @@ struct IdentifiableString: Identifiable {
     let id: String
 }
 
+struct HistorySettingsView: View {
+    @Bindable var viewModel: AppViewModel
+    @State private var providerID: String?
+    @State private var rangeDays = 1
+
+    private struct Point: Identifiable {
+        let id: Int
+        let date: Date
+        let value: Double
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                Picker("Provider", selection: $providerID) {
+                    ForEach(viewModel.config.providers.filter(\.enabled)) { provider in
+                        Text(provider.name).tag(String?.some(provider.id))
+                    }
+                }
+                Picker("Range", selection: $rangeDays) {
+                    Text("24 hours").tag(1)
+                    Text("7 days").tag(7)
+                }
+                .pickerStyle(.segmented)
+            }
+
+            Section("Remaining quota trend") {
+                if points.count >= 2 {
+                    Chart(points) { point in
+                        LineMark(
+                            x: .value("Time", point.date),
+                            y: .value("Remaining", point.value)
+                        )
+                        .interpolationMethod(.catmullRom)
+                        AreaMark(
+                            x: .value("Time", point.date),
+                            y: .value("Remaining", point.value)
+                        )
+                        .foregroundStyle(.blue.opacity(0.12))
+                    }
+                    .chartYScale(domain: 0...100)
+                    .frame(height: 240)
+
+                    if let providerID, let trend = viewModel.trendDescription(for: providerID) {
+                        Label(trend, systemImage: "gauge.with.dots.needle.50percent")
+                            .font(.callout)
+                    }
+                } else {
+                    ContentUnavailableView(
+                        "Not Enough History",
+                        systemImage: "chart.xyaxis.line",
+                        description: Text("History is recorded after successful provider refreshes.")
+                    )
+                    .frame(height: 240)
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .navigationTitle("History")
+        .onAppear {
+            providerID = providerID ?? viewModel.config.providers.first(where: \.enabled)?.id
+        }
+    }
+
+    private var points: [Point] {
+        guard let providerID,
+              let provider = viewModel.config.providers.first(where: { $0.id == providerID }) else { return [] }
+        let interval = max(provider.pollIntervalSec, viewModel.config.resourceMode.backgroundPollIntervalSeconds)
+        let maxSamples = max(1, rangeDays * 24 * 3600 / interval)
+        let values = Array((viewModel.usageHistory[providerID] ?? []).suffix(maxSamples))
+        let now = Date()
+        return values.enumerated().map { index, value in
+            Point(
+                id: index,
+                date: now.addingTimeInterval(Double(index - values.count + 1) * Double(interval)),
+                value: value
+            )
+        }
+    }
+}
+
 struct ConfigureProviderSheet: View {
     let providerID: String
     var viewModel: AppViewModel
@@ -286,6 +447,8 @@ struct ConfigureProviderSheet: View {
     @State private var baseURL: String = ""
     @State private var userID: String = ""
     @State private var groupID: String = ""
+    @State private var allowCredentialFileUpdates = false
+    @State private var officialSourceMode: OfficialSourceMode = .auto
 
     // Alert thresholds (mirror of the provider's AlertRule).
     @State private var lowRemaining: Double = 10
@@ -307,8 +470,30 @@ struct ConfigureProviderSheet: View {
                     }
                 }
                 
-                Section("Security / Credentials") {
-                    SecureField("API Key / Token", text: $apiKey)
+                if isRelay {
+                    Section("Security / Credentials") {
+                        SecureField("API Key / Token", text: $apiKey)
+                        Button("Remove Saved Credential", role: .destructive) {
+                            apiKey = ""
+                            viewModel.clearSecret(for: providerID)
+                        }
+                    }
+                } else {
+                    Section("Authentication") {
+                        Picker("Source", selection: $officialSourceMode) {
+                            ForEach(supportedSourceModes, id: \.self) { mode in
+                                Text(mode.title).tag(mode)
+                            }
+                        }
+                        Text("StatsUsage detects this provider’s local CLI login. No credential is stored in StatsUsage.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Toggle("Allow StatsUsage to update refreshed CLI credentials",
+                               isOn: $allowCredentialFileUpdates)
+                        Button("Test Connection") {
+                            viewModel.testConnection(providerID: providerID)
+                        }
+                    }
                 }
 
                 Section("Alerts") {
@@ -372,11 +557,17 @@ struct ConfigureProviderSheet: View {
         viewModel.config.providers.first(where: { $0.id == providerID })?.isRelay ?? false
     }
 
+    private var supportedSourceModes: [OfficialSourceMode] {
+        viewModel.config.providers.first(where: { $0.id == providerID })?.supportedOfficialSourceModes ?? [.auto]
+    }
+
     private func load() {
         guard let provider = viewModel.config.providers.first(where: { $0.id == providerID }) else { return }
         name = provider.name
         pollIntervalMinutes = provider.pollIntervalSec / 60
-        apiKey = viewModel.getSecret(for: providerID) ?? ""
+        if provider.isRelay {
+            apiKey = viewModel.getSecret(for: providerID) ?? ""
+        }
         lowRemaining = provider.threshold.lowRemaining
         maxConsecutiveFailures = provider.threshold.maxConsecutiveFailures
         notifyOnAuthError = provider.threshold.notifyOnAuthError
@@ -385,11 +576,14 @@ struct ConfigureProviderSheet: View {
             userID = relay.userID ?? ""
             groupID = relay.groupID ?? ""
         }
+        allowCredentialFileUpdates = provider.officialConfig?.allowCredentialFileUpdates ?? false
+        let savedMode = provider.officialConfig?.sourceMode ?? .auto
+        officialSourceMode = provider.supportedOfficialSourceModes.contains(savedMode) ? savedMode : .auto
     }
 
     private func save() {
         // Save keychain secret
-        if !apiKey.isEmpty {
+        if isRelay, !apiKey.isEmpty {
             viewModel.setSecret(apiKey, for: providerID)
         }
         
@@ -407,6 +601,9 @@ struct ConfigureProviderSheet: View {
                     config.providers[idx].relayConfig?.baseURL = baseURL
                     config.providers[idx].relayConfig?.userID = userID.isEmpty ? nil : userID
                     config.providers[idx].relayConfig?.groupID = groupID.isEmpty ? nil : groupID
+                } else {
+                    config.providers[idx].officialConfig?.allowCredentialFileUpdates = allowCredentialFileUpdates
+                    config.providers[idx].officialConfig?.sourceMode = officialSourceMode
                 }
             }
         }

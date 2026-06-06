@@ -53,4 +53,6 @@ Add a parsing test that feeds a recorded JSON fixture into
 - Keep `RelayProvider`, `AppViewModel`, and the settings root as thin orchestration
   shells. New parsing/auth/branching goes in a dedicated seam.
 - Secrets never live in config — only Keychain coordinates.
+- Relay endpoints must use HTTPS, except explicit localhost development endpoints.
+- External CLI credential files are read-only unless the user explicitly enables updates.
 - The status item redraws only when its render signature changes; don't bypass it.

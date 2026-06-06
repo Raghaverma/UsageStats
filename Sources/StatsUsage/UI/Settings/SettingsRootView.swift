@@ -12,6 +12,7 @@ struct SettingsRootView: View {
         case menuBar = "Menu Bar"
         case notch = "Notch"
         case providers = "Providers"
+        case history = "History"
         case about = "About"
         var id: String { rawValue }
         var systemImage: String {
@@ -20,6 +21,7 @@ struct SettingsRootView: View {
             case .menuBar: return "menubar.rectangle"
             case .notch: return "rectangle.topthird.inset.filled"
             case .providers: return "square.stack.3d.up"
+            case .history: return "chart.xyaxis.line"
             case .about: return "info.circle"
             }
         }
@@ -37,8 +39,16 @@ struct SettingsRootView: View {
             case .menuBar: MenuBarSettingsView(viewModel: viewModel)
             case .notch: NotchSettingsView(viewModel: viewModel)
             case .providers: ProvidersSettingsView(viewModel: viewModel)
+            case .history: HistorySettingsView(viewModel: viewModel)
             case .about: AboutSettingsView(viewModel: viewModel)
             }
+        }
+        .alert(item: $viewModel.userFacingError) { error in
+            Alert(
+                title: Text(error.title),
+                message: Text(error.message),
+                dismissButton: .default(Text("OK")) { viewModel.dismissUserFacingError() }
+            )
         }
     }
 }

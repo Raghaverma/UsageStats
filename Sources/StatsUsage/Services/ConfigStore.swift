@@ -50,13 +50,23 @@ final class ConfigStore: @unchecked Sendable {
                     // Preserve the raw bytes so nothing is silently discarded.
                     try? data.write(to: preservedURL)
                 }
-                return config
+                return Self.mergingNewDefaultProviders(into: config)
             } else {
                 // Invalid file — stash it before moving on.
                 try? data.write(to: preservedURL)
             }
         }
         return AppConfig.default
+    }
+
+    /// Add newly shipped providers without changing or re-enabling existing user entries.
+    private static func mergingNewDefaultProviders(into config: AppConfig) -> AppConfig {
+        var merged = config
+        let existingIDs = Set(config.providers.map(\.id))
+        merged.providers.append(contentsOf: ProviderDefaultCatalog.seedProviders().filter {
+            !existingIDs.contains($0.id)
+        })
+        return merged
     }
 
     /// Write the primary file plus shadow and last-known-good copies.

@@ -179,14 +179,18 @@ final class ClaudeProvider: UsageProvider, @unchecked Sendable {
             updated.expiresAtMs = Date().timeIntervalSince1970 * 1000 + expiresIn * 1000
         }
         if case let .file(path) = credentials.source {
-            persist(credentials: updated, path: path)
+            try persist(credentials: updated, path: path)
         }
         return updated
     }
 
-    private func persist(credentials: ClaudeCredentials, path: String) {
-        guard let fileData = try? Data(contentsOf: URL(fileURLWithPath: path)),
-              var json = (try? JSONSerialization.jsonObject(with: fileData)) as? [String: Any] else { return }
+    private func persist(credentials: ClaudeCredentials, path: String) throws {
+        guard descriptor.officialConfig?.allowCredentialFileUpdates == true else { return }
+        let url = URL(fileURLWithPath: path)
+        let fileData = try Data(contentsOf: url)
+        guard var json = try JSONSerialization.jsonObject(with: fileData) as? [String: Any] else {
+            throw ProviderError.invalidResponse("Claude credential file is malformed")
+        }
         
         var oauth = (json["claudeAiOauth"] as? [String: Any]) ?? [:]
         oauth["accessToken"] = credentials.accessToken
@@ -195,9 +199,7 @@ final class ClaudeProvider: UsageProvider, @unchecked Sendable {
         oauth["subscriptionType"] = credentials.subscriptionType
         json["claudeAiOauth"] = oauth
         
-        if let outputData = try? JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted]) {
-            try? outputData.write(to: URL(fileURLWithPath: path))
-        }
+        try AtomicCredentialFileWriter.writeJSON(json, to: url)
     }
 
     private func requestOAuthUsage(accessToken: String) async throws -> ([String: Any], HTTPURLResponse) {

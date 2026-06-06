@@ -270,23 +270,25 @@ final class GeminiProvider: UsageProvider, @unchecked Sendable {
         if let expiresIn = OfficialValueParser.double(json["expires_in"]) {
             updated.expiresAt = Date().addingTimeInterval(expiresIn)
         }
-        persist(credentials: updated)
+        try persist(credentials: updated)
         return updated
     }
 
-    private func persist(credentials: GeminiCredentials) {
+    private func persist(credentials: GeminiCredentials) throws {
+        guard descriptor.officialConfig?.allowCredentialFileUpdates == true else { return }
         let path = credentials.filePath
-        guard let fileData = try? Data(contentsOf: URL(fileURLWithPath: path)),
-              var json = (try? JSONSerialization.jsonObject(with: fileData)) as? [String: Any] else { return }
+        let url = URL(fileURLWithPath: path)
+        let fileData = try Data(contentsOf: url)
+        guard var json = try JSONSerialization.jsonObject(with: fileData) as? [String: Any] else {
+            throw ProviderError.invalidResponse("Gemini credential file is malformed")
+        }
         
         json["access_token"] = credentials.accessToken
         json["refresh_token"] = credentials.refreshToken
         json["id_token"] = credentials.idToken
         json["expiry_date"] = credentials.expiresAt.map { Int64($0.timeIntervalSince1970 * 1000) }
         
-        if let outputData = try? JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted]) {
-            try? outputData.write(to: URL(fileURLWithPath: path))
-        }
+        try AtomicCredentialFileWriter.writeJSON(json, to: url)
     }
 
     private func resolveClientSecrets() -> (id: String, secret: String)? {

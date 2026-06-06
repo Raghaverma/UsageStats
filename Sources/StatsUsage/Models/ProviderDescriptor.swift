@@ -2,18 +2,33 @@ import Foundation
 import StatsUsageDomain
 
 /// Source mode for an official provider.
-enum OfficialSourceMode: String, Codable, Sendable {
+enum OfficialSourceMode: String, Codable, CaseIterable, Sendable {
     case api, cli, web, auto
+
+    var title: String {
+        switch self {
+        case .api: return "Official API"
+        case .cli: return "Local CLI"
+        case .web: return "Web"
+        case .auto: return "Automatic"
+        }
+    }
 }
 
 /// Config for an official (first-party) provider.
 struct OfficialProviderConfig: Codable, Equatable, Sendable {
     var sourceMode: OfficialSourceMode
     var accountEmail: String?
+    var allowCredentialFileUpdates: Bool
 
-    init(sourceMode: OfficialSourceMode = .auto, accountEmail: String? = nil) {
+    init(
+        sourceMode: OfficialSourceMode = .auto,
+        accountEmail: String? = nil,
+        allowCredentialFileUpdates: Bool = false
+    ) {
         self.sourceMode = sourceMode
         self.accountEmail = accountEmail
+        self.allowCredentialFileUpdates = allowCredentialFileUpdates
     }
 
     static func `default`(type: ProviderType) -> OfficialProviderConfig {
@@ -24,6 +39,7 @@ struct OfficialProviderConfig: Codable, Equatable, Sendable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         sourceMode = try c.decodeIfPresent(OfficialSourceMode.self, forKey: .sourceMode) ?? .auto
         accountEmail = try c.decodeIfPresent(String.self, forKey: .accountEmail)
+        allowCredentialFileUpdates = try c.decodeIfPresent(Bool.self, forKey: .allowCredentialFileUpdates) ?? false
     }
 }
 
@@ -76,6 +92,11 @@ struct KimiProviderConfig: Codable, Equatable, Sendable {
 
 /// The full configured-provider record in the executable target.
 struct ProviderDescriptor: Codable, Equatable, Identifiable, Sendable {
+    enum ImplementationStatus: String {
+        case implemented = "Implemented"
+        case experimental = "Experimental"
+        case unavailable = "Unavailable"
+    }
     var id: String
     var name: String
     var family: ProviderFamily
@@ -122,6 +143,20 @@ struct ProviderDescriptor: Codable, Equatable, Identifiable, Sendable {
 
     var showsInMenuBar: Bool { showInMenuBar ?? true }
     var isRelay: Bool { type == .relay || type == .open || type == .dragon }
+    var implementationStatus: ImplementationStatus {
+        switch type {
+        case .codex, .claude, .gemini: return .experimental
+        case .relay, .open, .dragon: return .implemented
+        default: return .unavailable
+        }
+    }
+    var supportedOfficialSourceModes: [OfficialSourceMode] {
+        switch type {
+        case .claude: return [.auto, .api, .cli]
+        case .codex, .gemini: return [.auto, .api]
+        default: return []
+        }
+    }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)

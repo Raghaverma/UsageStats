@@ -25,6 +25,11 @@ enum AppUpdateError: Error, LocalizedError {
     case unsupportedInstallLocation
     case noAsset
     case badManifest
+    case untrustedDownloadLocation
+    case unexpectedAssetSize
+    case invalidCodeSignature
+    case wrongBundleIdentifier
+    case httpStatus(Int)
 
     var errorDescription: String? {
         switch self {
@@ -32,6 +37,11 @@ enum AppUpdateError: Error, LocalizedError {
         case .unsupportedInstallLocation: return "Updates only apply when running from an .app bundle."
         case .noAsset: return "Release manifest has no macOS asset."
         case .badManifest: return "Could not parse the release manifest."
+        case .untrustedDownloadLocation: return "The update points to an untrusted download location."
+        case .unexpectedAssetSize: return "The downloaded update size does not match the release manifest."
+        case .invalidCodeSignature: return "The downloaded application has an invalid code signature."
+        case .wrongBundleIdentifier: return "The downloaded application is not StatsUsage."
+        case .httpStatus(let status): return "The update server returned HTTP \(status)."
         }
     }
 }
@@ -52,7 +62,14 @@ actor AppUpdateService {
 
     /// GET the manifest and return it if it advertises a newer version than `current`.
     func fetchLatestRelease(current: String) async throws -> LatestReleaseManifest? {
-        let (data, _) = try await session.data(from: manifestURL)
+        guard Self.isTrustedReleaseURL(manifestURL) else {
+            throw AppUpdateError.untrustedDownloadLocation
+        }
+        let (data, response) = try await session.data(from: manifestURL)
+        try validateHTTP(response)
+        guard let finalURL = response.url, Self.isTrustedReleaseURL(finalURL) else {
+            throw AppUpdateError.untrustedDownloadLocation
+        }
         guard let manifest = try? JSONDecoder().decode(LatestReleaseManifest.self, from: data) else {
             throw AppUpdateError.badManifest
         }
@@ -61,12 +78,22 @@ actor AppUpdateService {
 
     /// Download the ZIP asset and verify its checksum; returns the temp file URL.
     func prepareUpdate(_ manifest: LatestReleaseManifest) async throws -> URL {
-        guard let asset = manifest.assets.macos_zip ?? manifest.assets.macos_dmg,
+        guard let asset = manifest.assets.macos_zip,
               let url = URL(string: asset.url) else {
             throw AppUpdateError.noAsset
         }
-        let (tempURL, _) = try await session.download(from: url)
+        guard Self.isTrustedReleaseURL(url) else {
+            throw AppUpdateError.untrustedDownloadLocation
+        }
+        let (tempURL, response) = try await session.download(from: url)
+        try validateHTTP(response)
+        guard let finalURL = response.url, Self.isTrustedReleaseURL(finalURL) else {
+            throw AppUpdateError.untrustedDownloadLocation
+        }
         let data = try Data(contentsOf: tempURL)
+        guard data.count == asset.size else {
+            throw AppUpdateError.unexpectedAssetSize
+        }
         let digest = SHA256.hash(data: data)
         let hex = digest.map { String(format: "%02x", $0) }.joined()
         guard hex.caseInsensitiveCompare(asset.sha256) == .orderedSame else {
@@ -121,6 +148,10 @@ actor AppUpdateService {
                 userInfo: [NSLocalizedDescriptionKey: "Extracted update did not contain StatsUsage.app"]
             )
         }
+        guard Bundle(url: newAppURL)?.bundleIdentifier == "com.statsusage.app" else {
+            throw AppUpdateError.wrongBundleIdentifier
+        }
+        try verifyCodeSignature(at: newAppURL)
         
         let backupURL = fileManager.temporaryDirectory.appendingPathComponent("StatsUsage.app.bak-\(UUID().uuidString)")
         if fileManager.fileExists(atPath: backupURL.path) {
@@ -133,7 +164,16 @@ actor AppUpdateService {
             try fileManager.moveItem(at: newAppURL, to: mainBundleURL)
             try? fileManager.removeItem(at: backupURL)
         } catch {
-            try? fileManager.moveItem(at: backupURL, to: mainBundleURL)
+            do {
+                try fileManager.moveItem(at: backupURL, to: mainBundleURL)
+            } catch let rollbackError {
+                throw NSError(
+                    domain: "AppUpdateService",
+                    code: 2,
+                    userInfo: [NSLocalizedDescriptionKey:
+                        "Update failed and rollback also failed: \(rollbackError.localizedDescription)"]
+                )
+            }
             throw error
         }
         
@@ -150,6 +190,31 @@ actor AppUpdateService {
                 }
             }
         }
+    }
+
+    private func validateHTTP(_ response: URLResponse) throws {
+        guard let http = response as? HTTPURLResponse else { return }
+        guard (200...299).contains(http.statusCode) else {
+            throw AppUpdateError.httpStatus(http.statusCode)
+        }
+    }
+
+    private func verifyCodeSignature(at appURL: URL) throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/codesign")
+        process.arguments = ["--verify", "--deep", "--strict", appURL.path]
+        try process.run()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0 else {
+            throw AppUpdateError.invalidCodeSignature
+        }
+    }
+
+    nonisolated static func isTrustedReleaseURL(_ url: URL) -> Bool {
+        guard url.scheme == "https", let host = url.host?.lowercased() else { return false }
+        return host == "github.com"
+            || host == "objects.githubusercontent.com"
+            || host.hasSuffix(".githubusercontent.com")
     }
 
     /// Compare semantic-ish version strings ("2.2.2" vs "2.10.0") component-wise.

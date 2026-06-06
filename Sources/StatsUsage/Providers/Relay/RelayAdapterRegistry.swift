@@ -11,7 +11,7 @@ final class RelayAdapterRegistry: @unchecked Sendable {
     /// Load every relay manifest from the bundle. SwiftPM's `.process` rule may
     /// flatten the `RelayAdapters/` directory, so we scan both that subdirectory
     /// and the bundle root, keeping only JSON that decodes as a manifest.
-    static func loadFromBundle(_ bundle: Bundle = .module) -> RelayAdapterRegistry {
+    static func loadFromBundle(_ bundle: Bundle = .customModule) -> RelayAdapterRegistry {
         let decoder = JSONDecoder()
         var seen: Set<String> = []
         var loaded: [RelayAdapterManifest] = []

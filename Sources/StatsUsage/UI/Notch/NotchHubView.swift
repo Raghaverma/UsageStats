@@ -8,8 +8,11 @@ struct NotchHubView: View {
     @Bindable var viewModel: AppViewModel
     let geometry: NotchGeometry
     var onOpenSettings: () -> Void
+    var hitState: NotchHitState
 
     @State private var isExpanded = false
+
+    private static let coordinateSpace = "notchHubRoot"
 
     private var earWidth: CGFloat { 84 }
     private var collapsedWidth: CGFloat { geometry.notchWidth + earWidth * 2 }
@@ -19,9 +22,21 @@ struct NotchHubView: View {
     var body: some View {
         VStack(spacing: 0) {
             island
+                .background(
+                    GeometryReader { proxy in
+                        Color.clear.preference(
+                            key: IslandFramePreferenceKey.self,
+                            value: proxy.frame(in: .named(Self.coordinateSpace))
+                        )
+                    }
+                )
             Spacer(minLength: 0).allowsHitTesting(false)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .coordinateSpace(name: Self.coordinateSpace)
+        .onPreferenceChange(IslandFramePreferenceKey.self) { frame in
+            Task { @MainActor in hitState.islandFrame = frame }
+        }
     }
 
     private var island: some View {
@@ -175,6 +190,15 @@ struct NotchHubView: View {
         default:
             return Color(nsColor: NSColor(red: 0.0, green: 0.90, blue: 0.46, alpha: 1.0))
         }
+    }
+}
+
+/// Reports the visible island's frame (in the hub's coordinate space) up to the
+/// hosting view so it can pass mouse events through everywhere else.
+private struct IslandFramePreferenceKey: PreferenceKey {
+    static let defaultValue: CGRect = .zero
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        value = nextValue()
     }
 }
 

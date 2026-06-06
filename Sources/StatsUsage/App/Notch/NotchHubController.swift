@@ -59,13 +59,17 @@ final class NotchHubController {
 
         let frame = panelFrame(on: screen, width: panelWidth)
         let panel = NotchPanel(contentRect: frame)
-        panel.contentView = NSHostingView(
+        let hitState = NotchHitState()
+        let hosting = NotchHostingView(
             rootView: NotchHubView(
                 viewModel: viewModel,
                 geometry: geometry,
-                onOpenSettings: onOpenSettings
+                onOpenSettings: onOpenSettings,
+                hitState: hitState
             )
         )
+        hosting.hitState = hitState
+        panel.contentView = hosting
         panel.setFrame(frame, display: true)
         panel.orderFrontRegardless()
         self.panel = panel

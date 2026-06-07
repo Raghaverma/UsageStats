@@ -60,13 +60,30 @@ jobs:
         run: |
           SHA="${{ github.sha }}"
           echo "Checking CI status for $SHA..."
-          STATUS=$(gh api "repos/${{ github.repository }}/commits/$SHA/check-runs" \
-            --jq '[.check_runs[] | select(.name == "Build and Test (macOS)") | .conclusion] | first // "none"')
-          if [ "$STATUS" != "success" ]; then
-            echo "::error::CI check 'Build and Test (macOS)' did not pass on $SHA (status: $STATUS). Aborting release."
-            exit 1
-          fi
-          echo "CI passed."
+          for i in $(seq 1 30); do
+            RUN=$(gh api "repos/${{ github.repository }}/commits/$SHA/check-runs" \
+              --jq '[.check_runs[] | select(.name == "Build and Test (macOS)")] | first')
+            if [ -z "$RUN" ] || [ "$RUN" = "null" ]; then
+              echo "No 'Build and Test (macOS)' check run found yet for $SHA, waiting..."
+            else
+              STATUS=$(echo "$RUN" | jq -r '.status')
+              CONCLUSION=$(echo "$RUN" | jq -r '.conclusion')
+              echo "status=$STATUS conclusion=$CONCLUSION"
+              if [ "$STATUS" = "completed" ]; then
+                if [ "$CONCLUSION" = "success" ]; then
+                  echo "CI passed."
+                  exit 0
+                else
+                  echo "::error::CI check 'Build and Test (macOS)' did not pass on $SHA (conclusion: $CONCLUSION). Aborting release."
+                  exit 1
+                fi
+              fi
+              echo "CI still running (status: $STATUS), waiting..."
+            fi
+            sleep 30
+          done
+          echo "::error::Timed out waiting for 'Build and Test (macOS)' check run to complete on $SHA. Aborting release."
+          exit 1
 
       - name: Build & Test
         run: |
